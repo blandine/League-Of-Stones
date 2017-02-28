@@ -1,8 +1,9 @@
 module.exports = {
   
-  sendData: function(res, data){
+  sendData: function(res, data, display){
     console.log("STATUS OK. return data : ");
-    console.log(data);
+    if(display === undefined || display)
+      console.log(data);
     res.send({
       "status" : "ok",
       "data" : data

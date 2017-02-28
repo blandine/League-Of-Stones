@@ -8,6 +8,8 @@ var sess = require('express-session');
 var tools = require('./modules/tools.js');
 var users = require('./modules/users.js');
 var matchmaking = require('./modules/matchmaking.js');
+var match = require('./modules/match.js');
+var cards = require('./modules/cards.js');
 
 var app = express();
 
@@ -42,8 +44,10 @@ function initApp(losDB){
 
   users.init(app, tools, losDB);
   matchmaking.init(app, tools, losDB);
-
-  var serverPort = 3000;
+  cards.init(app, tools, losDB);
+  match.init(app, tools, losDB, cards);
+ 
+  var serverPort = 8080;
   var server = https.createServer(options, app);
   server.listen(serverPort, function() {
     console.log('server up and running at %s port', serverPort);
