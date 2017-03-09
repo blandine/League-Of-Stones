@@ -65,7 +65,7 @@ module.exports = {
                     "email" : email,
                   }, function(err, result){
                     if(err == null){
-                      tools.removeInteractFromUser(sess.connectedUser._id);
+                      tools.removeInteractFromUser(sess.connectedUser._id, losDB);
                       sess.connectedUser = null;
                       tools.sendData(res, "User deleted");
                     }
@@ -127,7 +127,7 @@ module.exports = {
       app.get("/users/disconnect", function(req, res){
         var sess = req.session;
         if(sess && sess.connectedUser){
-          tools.removeInteractFromUser(sess.connectedUser._id);
+          tools.removeInteractFromUser(sess.connectedUser._id, losDB);
           sess.connectedUser = null;
           tools.sendData(res, "Disconnected");
         }
