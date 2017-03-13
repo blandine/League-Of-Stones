@@ -12,7 +12,7 @@ module.exports = {
             for(var user of result){
               ret.push({"email" : user.email, "name" : user.name});
             }
-            tools.sendData(res, ret);
+            tools.sendData(res, ret, req, losDB);
           }
         });
       });
@@ -36,7 +36,7 @@ module.exports = {
                 "name" :name
               }, function(err, result){
                 if(err == null){
-                  tools.sendData(res, {"id" : result.insertedId});
+                  tools.sendData(res, {"id" : result.insertedId}, req, losDB);
                 }
                 else{
                   tools.sendError(res, "Error during inserting a user : "+err);
@@ -67,7 +67,7 @@ module.exports = {
                     if(err == null){
                       tools.removeInteractFromUser(sess.connectedUser._id, losDB);
                       sess.connectedUser = null;
-                      tools.sendData(res, "User deleted");
+                      tools.sendData(res, "User deleted", req, losDB);
                     }
                     else{
                       tools.sendError(res, "Error during deleting a user : "+err);
@@ -111,7 +111,7 @@ module.exports = {
                   "token" : sess.id,
                   "email" : document.email,
                   "name" : document.name
-                });
+                }, req, losDB);
               }
               else{
                 console.log("WRONG PASS");
@@ -133,11 +133,11 @@ module.exports = {
           tools.removeInteractFromUser(sess.connectedUser._id, losDB);
           sess.connectedUser = null;
           losDB.sessionStore.destroy(req.query.token, function(){
-            tools.sendData(res, "Disconnected");
+            tools.sendData(res, "Disconnected", req, losDB);
           });
         }
         else{
-          tools.sendData(res, "Not connected");
+          tools.sendData(res, "Not connected", req, losDB);
         }
         
       });
@@ -151,12 +151,12 @@ module.exports = {
                 "email" : sess.connectedUser.email,
                 "name" : sess.connectedUser.name
               }
-            });
+            }, req, losDB);
           }
           else{
             tools.sendData(res, {
               "connectedUser" : null
-            });
+            }, req, losDB);
           }
         }
       });

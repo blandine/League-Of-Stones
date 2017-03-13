@@ -7,7 +7,7 @@ module.exports = {
           tools.sendError(res, "Error reaching mongo");
         }
         else{
-          tools.sendData(res, result, false);
+          tools.sendData(res, result, req, losDB, false);
         }
       });
     });

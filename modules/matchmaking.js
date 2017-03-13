@@ -13,7 +13,7 @@ module.exports = {
           else{
             if(result && result.user.email && result.user.email == sess.connectedUser.email){
               sess.matchmakingId = result._id;
-              tools.sendData(res, {"matchmakingId" : result._id, "request": result.request, "match" : result.match});
+              tools.sendData(res, {"matchmakingId" : result._id, "request": result.request, "match" : result.match}, req, losDB);
             }
             else{
               losDB.collection('Matchmaking').insertOne( {
@@ -22,7 +22,7 @@ module.exports = {
               }, function(err, resultMatch){
                 if(err == null){
                   sess.matchmakingId = resultMatch.insertedId;
-                  tools.sendData(res, {"matchmakingId" : resultMatch.insertedId, "request": []});
+                  tools.sendData(res, {"matchmakingId" : resultMatch.insertedId, "request": []}, req, losDB);
                 }
                 else{
                   tools.sendError(res, "Error during inserting a matchmaking : "+err);
@@ -64,7 +64,7 @@ module.exports = {
                 }
               });
               losDB.collection('Matchmaking').remove({"_id" : new ObjectId(sess.matchmakingId)});
-              tools.sendData(res, "Unparticipated");
+              tools.sendData(res, "Unparticipated", req, losDB);
             }
           }
         })
@@ -87,7 +87,7 @@ module.exports = {
                 if(matchmaking.user._id != sess.connectedUser._id)
                   ret.push({"email" : matchmaking.user.email, "name" : matchmaking.user.name, 'matchmakingId' :matchmaking._id});
               }
-              tools.sendData(res, ret);
+              tools.sendData(res, ret, req, losDB);
             }
          });
       }
@@ -101,6 +101,7 @@ module.exports = {
       var sess = req.session;
       var matchmakingId = req.query.matchmakingId;
       if(sess && sess.connectedUser && sess.connectedUser.email){
+        console.log("TEST : "+sess.matchmakingId);
         if(sess.matchmakingId && sess.matchmakingId != matchmakingId){
           losDB.collection('Matchmaking').findOne({"_id" : new ObjectId(matchmakingId)}, function(err, result){
             if(err != null){
@@ -118,7 +119,7 @@ module.exports = {
                   tools.sendError(res, "Error reaching MongoDB");
                 }
                 else{
-                  tools.sendData(res, "Request sent");
+                  tools.sendData(res, "Request sent", req, losDB);
                 }
               });
             }
@@ -171,7 +172,7 @@ module.exports = {
                   //match.id = result.insertedId;
                   losDB.collection('Matchmaking').update({"_id": new ObjectId(matchmakingId)}, {$set : {"request" : [], "match" : match}});
                   losDB.collection('Matchmaking').update({"_id": new ObjectId(sess.matchmakingId)}, {$set : {"request" : [], "match" : match}});
-                  tools.sendData(res, match);
+                  tools.sendData(res, match, req, losDB);
                 }
                 else{
                   tools.sendError(res, "Error during new match");

@@ -43,7 +43,7 @@ module.exports = {
              }
              result.player1.deck = (result.player1.deck && result.player1.deck.length)?result.player1.deck.length:0;
              result.player2.deck = (result.player2.deck && result.player2.deck.length)?result.player2.deck.length:0;
-             tools.sendData(res, result, false);
+             tools.sendData(res, result, req, losDB, false);
            }
          });
        }
@@ -70,7 +70,7 @@ module.exports = {
              match.player2.hand = match.player2.hand?match.player2.hand.length:0;
              ret .push(match);
            }
-           tools.sendData(res, ret, false);
+           tools.sendData(res, ret, req, losDB, false);
          }
        });
     });
@@ -147,7 +147,7 @@ module.exports = {
                        shuffle(syncDeck);
                        player.deck = syncDeck;
                        var cb = function(err, result){
-                         tools.sendData(res, player, false);
+                         tools.sendData(res, player, req, losDB, false);
                        };
                        if(numPlayer == 1){
                          losDB.collection('Match').update({"_id": new ObjectId(curMatch._id)}, {$set: { "player1.deck" : syncDeck}}, cb);
@@ -201,7 +201,7 @@ module.exports = {
                    player.hand.push(card);
                    player.cardPicked = true;
                    losDB.collection('Match').update({"_id" : new ObjectId(result._id)},result);
-                   tools.sendData(res, card, false);
+                   tools.sendData(res, card, req, losDB, false);
                  }
                  else{
                    tools.sendError(res, "Deck empty");
@@ -260,7 +260,7 @@ module.exports = {
                         board : player.board,
                         hand: player.hand
                       }
-                    }, false);
+                    }, req, losDB, false);
                   }
                   else{
                     tools.sendError(res, "Board full");
@@ -339,7 +339,7 @@ module.exports = {
                               board : result.player2.board,
                               hp : result.player2.hp
                             }
-                          });
+                          }, req, losDB);
                         }
                         else{
                           tools.sendError(res, "Ennemy card is not in the board");
@@ -412,7 +412,7 @@ module.exports = {
                             board : result.player2.board,
                             hp : result.player2.hp
                           }
-                        });
+                        }, req, losDB);
                       }
                       else{
                         tools.sendError(res, "Ennemy board is not empty");
@@ -461,7 +461,7 @@ module.exports = {
                player.turn = false;
                ennemyPlayer.turn = true;
                losDB.collection('Match').update({"_id" : new ObjectId(result._id)},result);
-               tools.sendData(res, "End of turn");
+               tools.sendData(res, "End of turn", req, losDB);
              }
              else{
                tools.sendError(res, "Not your turn");
@@ -489,7 +489,7 @@ module.exports = {
                var status = result.status;
                losDB.collection('Match').remove({"_id" : new ObjectId(result._id)});
                losDB.collection('Matchmaking').remove({"match._id" : new ObjectId(result._id)});
-               tools.sendData(res, status);
+               tools.sendData(res, status, req, losDB);
              }
              else{
                tools.sendError(res, "Match is not finished");

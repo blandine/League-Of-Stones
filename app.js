@@ -30,8 +30,9 @@ function initApp(losDB){
       console.log(req.query);
     if(req.query.token){
       losDB.sessionStore.get(req.query.token, function(error, session){
-        if(error === null)
+        if(error === null){
           req.session = session;
+        }
         next();
       });
     }

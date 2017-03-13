@@ -1,13 +1,24 @@
 module.exports = {
   
-  sendData: function(res, data, display){
+  
+  sendData: function(res, data, req, losDB, display){
     console.log("STATUS OK. return data : ");
     if(display === undefined || display)
       console.log(data);
-    res.send({
-      "status" : "ok",
-      "data" : data
-    });
+    if(req.query.token){
+      losDB.sessionStore.set(req.query.token, req.session, function(error){
+        res.send({
+          "status" : "ok",
+          "data" : data
+        });
+      });
+    }
+    else{
+      res.send({
+          "status" : "ok",
+          "data" : data
+        });
+    }
   },
   sendError : function(res, message){
     console.log("STATUS ERROR. Message : ");
