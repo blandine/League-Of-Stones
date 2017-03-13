@@ -22,6 +22,17 @@ module.exports = {
     losDB.collection('Matchmaking').remove({"user._id" : new ObjectId(userId)});
     losDB.collection('Match').remove({"player1.id" : new ObjectId(userId)});
     losDB.collection('Match').remove({"player2.id" : new ObjectId(userId)});
-  }
+  },
+  
+//   getSession : function(token, losDB, callback){
+//     losDB.get(token, function(error, session){
+//       if(error === null){
+//         callback(session);
+//       }
+//       else{
+//         callback(null);
+//       }
+//     });
+//   }
   
 };

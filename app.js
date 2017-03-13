@@ -3,6 +3,7 @@ var https = require('https');
 var express = require('express');
 var MongoClient = require('mongodb').MongoClient;
 var sess = require('express-session');
+var cors = require('cors');
 
 
 var tools = require('./modules/tools.js');
@@ -27,19 +28,30 @@ function initApp(losDB){
     console.log("REQUEST : "+req.originalUrl);
     if(req.query)
       console.log(req.query);
-    next();
+    if(req.query.token){
+      losDB.sessionStore.get(req.query.token, function(error, session){
+        if(error === null)
+          req.session = session;
+        next();
+      });
+    }
+    else
+      next();
   });
   
   //init session config
+  losDB.sessionStore = new sess.MemoryStore();
   app.use(sess({
     secret: 'Les loutres ça poutre!',
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 7200000 } // keep session activate during 2hours
-  }))
+    cookie: { maxAge: 7200000 }, // keep session activate during 2hours,
+    store : losDB.sessionStore
+  }));
+  app.use(cors());
 
   app.get('/', function (req, res) {
-    sendData(res, "Hello World ! ");
+    tools.sendData(res, "Hello World ! ");
   });
 
   users.init(app, tools, losDB);

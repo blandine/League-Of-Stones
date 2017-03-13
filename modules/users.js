@@ -89,6 +89,8 @@ module.exports = {
         }
       });
       
+      
+      //TODO : add token into the mongo base, clear it when token is obsolete, test if already connect thanks to the mongobase
       app.get("/users/connect", function(req, res){
         var sess = req.session;
         var email = req.query.email;
@@ -106,6 +108,7 @@ module.exports = {
                 sess.connectedUser = document;
                 tools.sendData(res, {
                   "id" : document._id,
+                  "token" : sess.id,
                   "email" : document.email,
                   "name" : document.name
                 });
@@ -129,7 +132,9 @@ module.exports = {
         if(sess && sess.connectedUser){
           tools.removeInteractFromUser(sess.connectedUser._id, losDB);
           sess.connectedUser = null;
-          tools.sendData(res, "Disconnected");
+          losDB.sessionStore.destroy(req.query.token, function(){
+            tools.sendData(res, "Disconnected");
+          });
         }
         else{
           tools.sendData(res, "Not connected");
