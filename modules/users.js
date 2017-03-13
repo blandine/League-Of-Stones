@@ -130,8 +130,11 @@ module.exports = {
       app.get("/users/disconnect", function(req, res){
         var sess = req.session;
         if(sess && sess.connectedUser){
+          console.log("TEST DISCONNECT : ");
+          console.log(sess.connectedUser._id);
           tools.removeInteractFromUser(sess.connectedUser._id, losDB);
           sess.connectedUser = null;
+          sess.matchmakingId = null;
           losDB.sessionStore.destroy(req.query.token, function(){
             tools.sendData(res, "Disconnected", req, losDB);
           });

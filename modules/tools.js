@@ -30,9 +30,11 @@ module.exports = {
   },
   removeInteractFromUser : function(userId, losDB){
     var ObjectId = require('mongodb').ObjectID;
-    losDB.collection('Matchmaking').remove({"user._id" : new ObjectId(userId)});
-    losDB.collection('Match').remove({"player1.id" : new ObjectId(userId)});
-    losDB.collection('Match').remove({"player2.id" : new ObjectId(userId)});
+    losDB.collection('Matchmaking').remove({"user._id" : userId});
+    losDB.collection('Matchmaking').remove({"match.player1.id" : userId});
+    losDB.collection('Matchmaking').remove({"match.player2.id" : userId});
+    losDB.collection('Match').remove({"player1.id" : userId});  
+    losDB.collection('Match').remove({"player2.id" : userId});
   },
   
 //   getSession : function(token, losDB, callback){
