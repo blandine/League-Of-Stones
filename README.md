@@ -1,24 +1,37 @@
-## Start Server 
+## Requirements
+
+- NPM
+- Download and install MongoDB : https://www.mongodb.com/download-center/community
+
+## Start Server
+
+Run MongoDb :
+
+On Windows, execute mongod.exe
+
+Then, start the nodeJS server :
 
 ```
 $ npm start
 ```
 
-Server starts on localhost:8080
+Server starts on localhost:8080.
 
-## API 
+Check http://localhost:8080
+
+## API
 
 ### GLOBAL
 
-GET / 
+GET /
 
 GET /users/getAll
 
-GET /cards/getAll 
+GET /cards/getAll
 
 ### USERS
 
-GET /users/subscribe 
+GET /users/subscribe
 
 GET /users/unsubscribe
 
