@@ -72,3 +72,7 @@ GET /matchmaking/getAll
 GET /matchmaking/request
 
 GEt /matchmaking/acceptRequest
+
+# How to set up docker for nodejs and mongoDB
+
+https://medium.com/statuscode/dockerising-a-node-js-and-mongodb-app-d22047e2806f
