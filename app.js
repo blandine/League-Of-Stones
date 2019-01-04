@@ -53,13 +53,13 @@ function initApp(losDB) {
   cards.init(app, tools, losDB);
   match.init(app, tools, losDB, cards);
 
-  var serverPort = 8080;
+  var serverPort = 3000;
   app.listen(serverPort, function() {
     console.log('server up and running at %s port', serverPort);
   });
 }
 
-var mongoUrl = process.env.MONGO_URL || localhost;
+var mongoUrl = process.env.MONGO_URL || 'localhost';
 
 MongoClient.connect(
   'mongodb://' + mongoUrl + ':27017',

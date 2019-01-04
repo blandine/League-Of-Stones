@@ -15,9 +15,9 @@ Then, start the nodeJS server :
 $ npm start
 ```
 
-Server starts on localhost:8080.
+Server starts on localhost:3000.
 
-Check http://localhost:8080
+Check http://localhost:3000
 
 ## API
 
