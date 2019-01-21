@@ -64,6 +64,8 @@ module.exports = {
       var sess = req.session;
       var hashPass = req.query.password;
       var email = req.query.email;
+      const bcrypt = require('bcrypt');
+
       if (hashPass && email) {
         if (
           sess &&
@@ -76,7 +78,7 @@ module.exports = {
             .findOne({ email: email }, function(err, document) {
               if (err) {
                 tools.sendError(res, 'Error during reaching MongoDB : ' + err);
-              } else if (document && document.password == hashPass) {
+              } else if (document && bcrypt.compare(hashPass, document.password)) {
                 losDB.collection('Users').remove(
                   {
                     email: email
