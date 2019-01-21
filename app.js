@@ -53,7 +53,7 @@ function initApp(losDB) {
   cards.init(app, tools, losDB);
   match.init(app, tools, losDB, cards);
 
-  var serverPort = 3000;
+  var serverPort = 3001;
   app.listen(serverPort, function() {
     console.log('server up and running at %s port', serverPort);
   });

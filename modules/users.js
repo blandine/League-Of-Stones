@@ -20,9 +20,12 @@ module.exports = {
     });
 
     app.get('/users/subscribe', function(req, res) {
-      var hashPass = req.query.password;
+      var bcrypt = require('bcrypt');
+      var saltRounds = 10; // cost factor
+      var hashPass = bcrypt.hashSync(req.query.password, saltRounds); //Hash creation with bcrypt
       var email = req.query.email;
       var name = req.query.name;
+      var resultHash, hash ,iterations;
       if (hashPass && email && name) {
         losDB
           .collection('Users')
@@ -32,11 +35,12 @@ module.exports = {
             } else if (document) {
               tools.sendError(res, 'User already exists');
             } else {
+
               losDB.collection('Users').insertOne(
                 {
                   email: email,
-                  password: hashPass,
-                  name: name
+                  name: name,
+                  hashPass
                 },
                 function(err, result) {
                   if (err == null) {
@@ -110,7 +114,9 @@ module.exports = {
     app.get('/users/connect', function(req, res) {
       var sess = req.session;
       var email = req.query.email;
-      var password = req.query.password;
+      var hash = req.query.password;
+      const bcrypt = require('bcrypt');
+
       if (sess && sess.connectedUser) {
         tools.sendError(res, 'Already connected');
       } else {
@@ -120,7 +126,7 @@ module.exports = {
             if (err) {
               tools.sendError(res, 'Error during reaching MongoDB : ' + err);
             } else if (document) {
-              if (document.password == password) {
+              if (bcrypt.compare(hash, document.password)) { //test du hash
                 sess.connectedUser = document;
                 tools.sendData(
                   res,
@@ -188,5 +194,6 @@ module.exports = {
         }
       }
     });
+
   }
 };
