@@ -5,8 +5,10 @@ services:
     restart: always
     build: .
     ports:
-      - '3000:3000'
+      - '3001:3001'
     links:
+      - mongo
+    depends_on:
       - mongo
     environment:
       - MONGO_URL=mongo
