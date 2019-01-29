@@ -61,13 +61,11 @@ module.exports = {
       var sess = req.session;
       var hashPass = req.query.password;
       var email = req.query.email;
-
       if (hashPass && email) {
         if (
           sess &&
           sess.connectedUser &&
-          sess.connectedUser.email == email &&
-          sess.connectedUser.password == hashPass
+          sess.connectedUser.email === email 
         ) {
           losDB
             .collection('Users')
@@ -97,12 +95,12 @@ module.exports = {
                    }
                  );
                } else {
-                 tools.sendError(res, "User doesn't exist");
+                 tools.sendError(res, "User doesn't exist 2");
                }
               });
             });
         } else {
-          tools.sendError(res, "User doesn't exist");
+          tools.sendError(res, "User doesn't exist 1");
         }
       } else {
         tools.sendError(res, 'Error : you need to specify all the parameters');
