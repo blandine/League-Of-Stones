@@ -9,15 +9,16 @@ Run MongoDb :
 
 On Windows, execute mongod.exe
 
-Then, start the nodeJS server :
+Then, install the npm packages and start the nodeJS server :
 
 ```
+$ npm install
 $ npm start
 ```
 
-Server starts on localhost:3000.
+Server starts on localhost:3001.
 
-Check http://localhost:3000
+Check http://localhost:3001
 
 ## API
 
