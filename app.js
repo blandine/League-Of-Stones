@@ -59,10 +59,10 @@ function initApp(losDB) {
   });
 }
 
-var mongoUrl = process.env.MONGO_URL || 'localhost';
+var mongoUrl = process.env.MONGO_URL || 'mongodb://localhost:27017';
 
 MongoClient.connect(
-  'mongodb://' + mongoUrl + ':27017',
+   mongoUrl,
   function(err, client) {
     if (err) {
       throw err;
