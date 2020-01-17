@@ -60,14 +60,14 @@ function initApp(losDB) {
 }
 
 var mongoUrl = process.env.MONGO_URL || 'mongodb://localhost:27017';
-
+var mongoDb = process.env.MONGO_DB || 'League_Of_Stones';
 MongoClient.connect(
    mongoUrl,
   function(err, client) {
     if (err) {
       throw err;
     }
-    losDB = client.db('League_Of_Stones');
+    losDB = client.db(mongoDb);
     console.log('MONGO DB initialised : ');
     console.log(losDB.s.databaseName);
     initApp(losDB); //init app only when mongodb connection is set up
