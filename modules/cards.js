@@ -1,21 +1,32 @@
+var champions = require('../championsLight.json');
+/* Reinit champions from LOL file
 var champions = require('./champion.json');
+const fs = require('fs')
+
+const championsLight = []
+champions.forEach((champion)=> {
+  const {id, name, title, image, info} = champion;
+  championsLight.push({id, name, title, image, info});
+})
+
+fs.writeFile('./championsLight', JSON.stringify(championsLight), ()=>{});*/
+
 module.exports = {
   init: function(app, tools, losDB) {
-    app.get('/cards/getAll', function(req, res) {
+    app.get('/cards', function(req, res) {
       losDB
         .collection('Cards')
         .find({})
-        .toArray(function(err, result) {
-          if(!result || !result.length ) {
-            losDB.collection('Cards').insert(champions).then((inserted)=>{
-              tools.sendData(res, inserted, req, losDB, false);
-            })
+        .toArray(async function(err, result) {
+          let cards = result;
+          if(!cards || !cards.length ) {
+            const inserted = await losDB.collection('Cards').insertMany(champions);
+            cards = inserted.ops;
           }
           if (err != null) {
             tools.sendError(res, 'Error reaching mongo');
-          } else {
-            tools.sendData(res, result, req, losDB, false);
           }
+          tools.sendData(res, cards, req, losDB, false);
         });
     });
   }
