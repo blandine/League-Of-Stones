@@ -12,7 +12,7 @@ On Windows, execute mongod.exe
 Then, install the npm packages and start the nodeJS server :
 
 ```
-$ npm install
+$ npm ci
 $ npm start
 ```
 
@@ -28,7 +28,7 @@ GET /
 
 GET /users/getAll
 
-GET /cards/getAll
+GET /cards
 
 ### USERS
 
