@@ -5,11 +5,11 @@ const fs = require('fs')
 
 const championsLight = []
 champions.forEach((champion)=> {
-  const {id, name, title, image, info} = champion;
-  championsLight.push({id, name, title, image, info});
+  const {id, key, name, title, image, info} = champion;
+  championsLight.push({id,key, name, title, image, info});
 })
 
-fs.writeFile('./championsLight', JSON.stringify(championsLight), ()=>{});*/
+fs.writeFile('./championsLight.json', JSON.stringify(championsLight), ()=>{});*/
 
 module.exports = {
   init: function(app, tools, losDB) {
