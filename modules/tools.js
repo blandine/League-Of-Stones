@@ -10,9 +10,9 @@ module.exports = {
     } 
     res.send(data);
   },
-  sendError: function (res, message) {
+  sendError: function (res, message, code=500) {
     console.log('STATUS ERROR. Message : ', message);
-    res.status(500).send(message);
+    res.status(code).send(message);
   },
   removeInteractFromUser: function (userId, losDB) {
     var ObjectId = require('mongodb').ObjectID;

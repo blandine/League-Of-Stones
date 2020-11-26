@@ -18,44 +18,31 @@ module.exports = {
         });
     });
 
-    app.get('/users/subscribe', function(req, res) {
-      var saltRounds = 10; // cost factor
-      var hashPass = bcrypt.hashSync(req.query.password, saltRounds); //Hash creation with bcrypt
-      var email = req.query.email;
-      var name = req.query.name;
-      if (hashPass && email && name) {
-        losDB
-          .collection('Users')
-          .findOne({ email: email }, function(err, document) {
-            if (err) {
-              tools.sendError(res, 'Error during reaching MongoDB : ' + err);
-            } else if (document) {
-              tools.sendError(res, 'User already exists');
-            } else {
-
-              losDB.collection('Users').insertOne(
-                {
-                  email: email,
-                  name: name,
-                  password: hashPass
-                },
-                function(err, result) {
-                  if (err == null) {
-                    tools.sendData(res, { id: result.insertedId }, req, losDB);
-                  } else {
-                    tools.sendError(
-                      res,
-                      'Error during inserting a user : ' + err
-                    );
-                  }
-                }
-              );
+    app.put('/user', async function(req, res) {
+      const {password, email, name} = req.body;
+      if (password && email && name) {
+        const saltRounds = 10; // cost factor
+        const hashPass = bcrypt.hashSync(password, saltRounds); //Hash creation with bcrypt
+        try {
+          const user = await losDB.collection('Users').findOne({ email: email });
+          if (user) {
+            tools.sendError(res, 'User already exists', 409);
+          } else {
+            const newUser = await losDB.collection('Users').insertOne(
+              {
+                email: email,
+                name: name,
+                password: hashPass
+              });
+              tools.sendData(res, { id: newUser.insertedId }, req, losDB);
             }
-          });
-      } else {
-        tools.sendError(res, 'Error : you need to specify all the parameters');
-      }
-    });
+        } catch{
+          tools.sendError(res, 'Error during inserting a user : ' + err);
+        }
+    } else {
+      tools.sendError(res, 'Missing parameters. Parameters are : name, email, password.', 500);
+    }
+  });
 
     app.get('/users/unsubscribe', function(req, res) {
       var sess = req.session;

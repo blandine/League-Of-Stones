@@ -44,6 +44,8 @@ function initApp(losDB) {
     })
   );
   app.use(cors());
+  app.use(express.json());
+  app.use(express.urlencoded({extended: true}));
 
   app.get('/', function(req, res) {
     tools.sendData(res, {message:'League of Stones server is up ! Welcome :) '}, req);
