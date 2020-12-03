@@ -95,10 +95,9 @@ module.exports = {
     });
 
     //TODO : add token into the mongo base, clear it when token is obsolete, test if already connect thanks to the mongobase
-    app.get('/users/connect', function(req, res) {
+    app.post('/login', function(req, res) {
+      const {email, password} = req.body;
       var sess = req.session;
-      var email = req.query.email;
-      var hash = req.query.password;
       
       if (sess && sess.connectedUser) {
         tools.sendError(res, 'Already connected');
@@ -110,7 +109,7 @@ module.exports = {
           if (err) {
             tools.sendError(res, 'Error during reaching MongoDB : ' + err);
           } else if (document) {
-            bcrypt.compare(hash, document.password).then((isSameHash)=> { 
+            bcrypt.compare(password, document.password).then((isSameHash)=> { 
               if(isSameHash){
               sess.connectedUser = document;
               tools.sendData(
@@ -133,15 +132,19 @@ module.exports = {
         });
     });
 
-    app.get('/users/disconnect', function(req, res) {
-      var sess = req.session;
+    app.post('/logout', function(req, res) {
+      const sess = req.session;
+      const token = req.header('WWW_Authenticate');
+      if(!token) {
+        tools.sendError(res, 'Missing token');
+        return;
+      }
+      
       if (sess && sess.connectedUser) {
-        console.log('TEST DISCONNECT : ');
-        console.log(sess.connectedUser._id);
         tools.removeInteractFromUser(sess.connectedUser._id, losDB);
         sess.connectedUser = null;
         sess.matchmakingId = null;
-        losDB.sessionStore.destroy(req.query.token, function() {
+        losDB.sessionStore.destroy(token, function() {
           tools.sendData(res, 'Disconnected', req, losDB);
         });
       } else {

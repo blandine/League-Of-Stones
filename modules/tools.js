@@ -16,11 +16,11 @@ module.exports = {
   },
   removeInteractFromUser: function (userId, losDB) {
     var ObjectId = require('mongodb').ObjectID;
-    losDB.collection('Matchmaking').remove({ 'user._id': userId });
-    losDB.collection('Matchmaking').remove({ 'match.player1.id': userId });
-    losDB.collection('Matchmaking').remove({ 'match.player2.id': userId });
-    losDB.collection('Match').remove({ 'player1.id': userId });
-    losDB.collection('Match').remove({ 'player2.id': userId });
+    losDB.collection('Matchmaking').deleteMany({ 'user._id': userId });
+    losDB.collection('Matchmaking').deleteMany({ 'match.player1.id': userId });
+    losDB.collection('Matchmaking').deleteMany({ 'match.player2.id': userId });
+    losDB.collection('Match').deleteMany({ 'player1.id': userId });
+    losDB.collection('Match').deleteMany({ 'player2.id': userId });
   },
   deleteDb: async function (res, message, req, losDb) {
     const result = await losDb.dropDatabase();
