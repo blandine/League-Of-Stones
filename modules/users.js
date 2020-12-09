@@ -134,7 +134,7 @@ module.exports = {
 
     app.post('/logout', function(req, res) {
       const sess = req.session;
-      const token = req.header('WWW_Authenticate');
+      const token = req.header('WWW-Authenticate');
       if(!token) {
         tools.sendError(res, 'Missing token');
         return;
