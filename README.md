@@ -22,57 +22,78 @@ Check http://localhost:3001
 
 ## API
 
-### GLOBAL
+### GLOBAL  
+  
+GET /  
+Check if API is up
 
-GET /
+GET /users/getAll  
+Return all suscribed users
 
-GET /users/getAll
-
-GET /cards
+GET /cards  
+Return all cards
 
 ### USERS
 
-GET /users/subscribe
+PUT /user    
+Create a new user with email, name and password
 
-GET /users/unsubscribe
+GET /users/unsubscribe  
+Unsubscribe a connected user with email and password
 
-GET /users/connect
+GET /login  
+Connect a user with email and password
 
-GET /users/disconnect
+GET /logout   
+Disconnect a connected user. Requires a header with a www-authenticate token
 
-GEt /users/amIConnected
+GEt /users/amIConnected  
+Returns email and name of the connected user
 
 ### MATCH
 
-GET /match/getMatch
+GET /match/getMatch  
+Returns all data about a match
 
-GET /match/getAllMatch
+GET /match/getAllMatch  
 
-GET /match/initDeck
 
-GET /match/pickCard
+GET /match/initDeck  
+Send the player deck to the server. Requires a parameter deck with the cards array.
 
-GET /match/playCard
+GET /match/pickCard  
+Returns a new card from the deck
 
-GET /match/attack
+GET /match/playCard  
+Play a card
 
-GET /match/attackPlayer
+GET /match/attack 
+Use a card to attack a ennemy champion. Requires card and ennemyCard
 
-GET /match/endTurn
+GET /match/attackPlayer  
+Use a card to attck the ennemy player
+
+GET /match/endTurn  
+End a player turn
 
 GET /match/finishMatch
+End match
 
 ### MATCHMAKING
 
-GET /matchmaking/participate
+GET /matchmaking/participate  
+Add user to the waiting list
 
-GET /matchmaking/unparticipate
+GET /matchmaking/unparticipate  
 
-GET /matchmaking/getAll
+GET /matchmaking/getAll  
+Return all users on the waiting list with their matchmakingId
 
-GET /matchmaking/request
+GET /matchmaking/request  
+Send a match request to a user on the waiting list. Requires the matchmakingId
 
-GEt /matchmaking/acceptRequest
+GEt /matchmaking/acceptRequest  
+Accept a match request. Requires the matchmakingId of the user who did the request.
 
 # How to set up docker for nodejs and mongoDB
 
