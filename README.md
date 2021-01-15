@@ -41,28 +41,28 @@ Create a new user with email, name and password
 GET /users/unsubscribe  
 Unsubscribe a connected user with email and password
 
-GET /login  
+POST /login  
 Connect a user with email and password
 
-GET /logout   
+POST /logout   
 Disconnect a connected user. Requires a header with a www-authenticate token
 
-GEt /users/amIConnected  
+GET /users/amIConnected  
 Returns email and name of the connected user
 
 ### MATCH
 
 GET /match/getMatch  
-Returns all data about a match
+Return all data about a match
 
 GET /match/getAllMatch  
-
+Return current status of all the matches
 
 GET /match/initDeck  
 Send the player deck to the server. Requires a parameter deck with the cards array.
 
 GET /match/pickCard  
-Returns a new card from the deck
+Return a new card from the deck
 
 GET /match/playCard  
 Play a card
@@ -92,7 +92,7 @@ Return all users on the waiting list with their matchmakingId
 GET /matchmaking/request  
 Send a match request to a user on the waiting list. Requires the matchmakingId
 
-GEt /matchmaking/acceptRequest  
+GET /matchmaking/acceptRequest  
 Accept a match request. Requires the matchmakingId of the user who did the request.
 
 # How to set up docker for nodejs and mongoDB
