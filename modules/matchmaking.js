@@ -113,7 +113,7 @@ module.exports = {
             }
           });
       } else {
-        tools.sendError('You need to be connected and in matchmaking');
+        tools.sendError(res,'You need to be connected and in matchmaking');
       }
     });
 
