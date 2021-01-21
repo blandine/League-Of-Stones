@@ -22,8 +22,9 @@ function initApp(losDB) {
     res.header('Content-Type', 'application/json');
     console.log('REQUEST : ' + req.originalUrl);
     if (req.query) console.log(req.query);
-    if (req.query.token) {
-      losDB.sessionStore.get(req.query.token, function(error, session) {
+    if (req.header('WWW-Authenticate')) console.log('token', req.header('WWW-Authenticate'));
+    if (req.header('WWW-Authenticate')) {
+      losDB.sessionStore.get(req.header('WWW-Authenticate'), function(error, session) {
         if (error === null) {
           req.session = session;
         }
