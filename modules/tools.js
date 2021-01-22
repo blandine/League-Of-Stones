@@ -2,9 +2,10 @@ module.exports = {
   sendData: async function (res, data, req, losDB, display) {
     console.log('STATUS OK. return data : ');
     if (display === undefined || display) console.log(data);
-    if (req.query.token) {
+
+    if (req.header('WWW-Authenticate')) {
       const sessionStatus = await losDB.sessionStore.set(
-        req.query.token,
+        req.header('WWW-Authenticate'),
         req.session
       );
     } 

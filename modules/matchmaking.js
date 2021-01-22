@@ -19,11 +19,12 @@ module.exports = {
                 result.user.email &&
                 result.user.email == sess.connectedUser.email
               ) {
-                sess.matchmakingId = result._id;
+                req.session.matchmakingId = result._id.toString();
+                console.log("sess.matchmakingId", result._id.toString())
                 tools.sendData(
                   res,
                   {
-                    matchmakingId: result._id,
+                    matchmakingId: result._id.toString(),
                     request: result.request,
                     match: result.match
                   },
@@ -38,7 +39,7 @@ module.exports = {
                   },
                   function(err, resultMatch) {
                     if (err == null) {
-                      sess.matchmakingId = resultMatch.insertedId;
+                      req.session.matchmakingId = resultMatch.insertedId.toString();
                       tools.sendData(
                         res,
                         { matchmakingId: resultMatch.insertedId, request: [] },
@@ -148,7 +149,11 @@ module.exports = {
       var sess = req.session;
       var matchmakingId = req.query.matchmakingId;
       if (sess && sess.connectedUser && sess.connectedUser.email) {
-        console.log('TEST : ' + sess.matchmakingId);
+        console.log('matchmakingId : ' + sess.matchmakingId);
+        if(!sess.matchmakingId) {
+          tools.sendError(res, 'There is an issue with session');
+          return;
+        }
         if (sess.matchmakingId && sess.matchmakingId != matchmakingId) {
           losDB
             .collection('Matchmaking')
