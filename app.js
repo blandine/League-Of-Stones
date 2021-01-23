@@ -1,7 +1,5 @@
-const fs = require('fs');
 const express = require('express');
-const MongoClient = require('mongodb').MongoClient;
-const sess = require('express-session');
+const expressSession = require('express-session');
 const cors = require('cors');
 
 const tools = require('./modules/tools.js');
@@ -10,11 +8,13 @@ const users = require('./modules/users.js');
 const matchmaking = require('./modules/matchmaking.js');
 const match = require('./modules/match.js');
 const cards = require('./modules/cards.js');
+const { MongoDBConnection} = require('./modules/connection.js');
+const { Store } = require('./modules/connection.js');
 
+var indexRouter = require('./modules/routes/index.js');
 const app = express();
 
-let losDB = null;
-function initApp(losDB) {
+function initApp() {
   //Allowing CORS connection
   app.all('*', function(req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');
@@ -24,7 +24,7 @@ function initApp(losDB) {
     if (req.query) console.log(req.query);
     if (req.header('WWW-Authenticate')) console.log('token', req.header('WWW-Authenticate'));
     if (req.header('WWW-Authenticate')) {
-      losDB.sessionStore.get(req.header('WWW-Authenticate'), function(error, session) {
+      Store.session.get(req.header('WWW-Authenticate'), function(error, session) {
         if (error === null) {
           req.session = session;
         }
@@ -34,29 +34,25 @@ function initApp(losDB) {
   });
 
   //init session config
-  losDB.sessionStore = new sess.MemoryStore();
   app.use(
-    sess({
+    expressSession({
       secret: 'ceci est un secret!',
       resave: false,
       saveUninitialized: false,
       cookie: { maxAge: 7200000 }, // keep session activate during 2hours,
-      store: losDB.sessionStore
+      store: Store.session
     })
   );
   app.use(cors());
   app.use(express.json());
   app.use(express.urlencoded({extended: true}));
 
-  app.get('/', function(req, res) {
-    tools.sendData(res, {message:'League of Stones server is up ! Welcome :) '}, req);
-  });
-
-  server.init(app, tools, losDB);
-  users.init(app, tools, losDB);
-  matchmaking.init(app, tools, losDB);
-  cards.init(app, tools, losDB);
-  match.init(app, tools, losDB, cards);
+  app.use('/', indexRouter);
+  // server.init(app, tools, losDB);
+  // users.init(app, tools, losDB);
+  // matchmaking.init(app, tools, losDB);
+  // cards.init(app, tools, losDB);
+  // match.init(app, tools, losDB, cards);
 
   const serverPort = process.env.PORT || 3001;
   app.listen(serverPort, function() {
@@ -64,17 +60,11 @@ function initApp(losDB) {
   });
 }
 
-const mongoUrl = process.env.MONGO_URL || 'mongodb://localhost:27017';
-const mongoDb = process.env.MONGO_DB || 'League_Of_Stones';
-MongoClient.connect(
-   mongoUrl,
-  function(err, client) {
-    if (err) {
-      throw err;
-    }
-    losDB = client.db(mongoDb);
-    initApp(losDB); //init app only when mongodb connection is set up
-    console.log('MONGO DB initialised : ');
-    console.log(losDB.databaseName);
-  }
-);
+
+MongoDBConnection.connect().then(()=>{
+  Store.initSession(expressSession);
+  initApp()
+  console.log('MONGO DB initialised : ');
+  console.log(MongoDBConnection.db.databaseName);
+});
+
