@@ -1,7 +1,7 @@
 var bcrypt = require('bcrypt');
 const { MongoDBConnection } = require('../database');
 
-async function createAccount(pEmail, pPassword, pUsername,) {
+async function createAccount(pEmail, pPassword, pUsername) {
     const lSaltRounds = 10; // cost factor
     const lHashPass = bcrypt.hashSync(pPassword, lSaltRounds);
     try {
@@ -9,7 +9,7 @@ async function createAccount(pEmail, pPassword, pUsername,) {
 
         const lUserResult = await lCollection.findOne({ email: pEmail });
         if (lUserResult) {
-            return [null, 'User already exists', 409];
+            return [null, new StatusCodeError('User already exists', 409)];
         }
 
         const lNewUser = await lCollection.insertOne({

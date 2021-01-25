@@ -1,43 +1,29 @@
-function checkAuthentication(req,res){
-    if(req){
-        const token = req.header('WWW-Authenticate');
-        if(!token){
-            res.status(500);
-            res.json({
-            error: 'Missing token.',
-            });
-            return [null,'Missing token.'];
-        }
-        if(!req.session.connectedUser){
-            res.status(500);
-            res.json({
-            error: 'User is not connected.',
-            });
-            return [null,'User is not connected.'];;
-        }
-        
-    }
+function checkAuthentication(req, res) {
+  const token = req.header('WWW-Authenticate');
+  if (!token) {
+    return [null, new StatusCodeError('Missing token.', 400)];
+  }
+  if (!req.session.connectedUser) {
+    return [null, new StatusCodeError('User is not connected.', 500)];
+  }
+  return ["ok", null];
 }
 
-async function processServiceResponse(pService, res, req) {
-    
-  try {
-    let [lResult, error,code] = await pService;
-    if (error) {
-      res.status(code==undefined?400:code);
-      if (typeof error == 'object') {
-        res.json(error);
-      } else {
-        res.json({ error });
-      }
-      console.error('Caught error : ' + error);
-      return;
-    }
-    res.json(lResult);
-  } catch (error) {
-    res.status(500);
-    res.end();
-    console.error('Caught error : ' + error);
+
+class StatusCodeError extends Error{
+  constructor(message, code) {
+    this.message = message;
+    this.code = code ? code : 400;
   }
 }
-module.exports = { processServiceResponse,checkAuthentication };
+function processServiceResponse(pServiceResponse, res) {
+  let [lResult, error] = pServiceResponse;
+  if (error) {
+    console.error('Caught error : ' + error);
+    res.status(error.code == undefined ? 400 : error.code);
+    res.json(error);
+  } else {
+    res.json(lResult);
+  }
+}
+module.exports = { processServiceResponse, checkAuthentication, StatusCodeError };

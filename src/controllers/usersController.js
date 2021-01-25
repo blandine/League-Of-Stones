@@ -1,4 +1,4 @@
-const { processServiceResponse } = require('../routes/utils');
+const { processServiceResponse, StatusCodeError } = require('../routes/utils');
 var {
   getAllUsers,
   deleteAccount,
@@ -7,95 +7,83 @@ var {
   logout,
 } = require('../services/usersService');
 
-function createUserAccount(req, res) {
+async function createUserAccount(req, res) {
   const { name, email, password } = req.body;
+  let response, error;
   if (!password || !email || !name) {
-    res.status(400);
-    res.json({
-      error: 'Missing parameters. Parameters are : name, email, password.',
-    });
-    return;
+    error = new StatusCodeError('Missing parameters. Parameters are : name, email, password.')
+  } else {
+    [response, error] = await createAccount(email, password, name);
   }
-  processServiceResponse(createAccount(email, password, name), res);
+  processServiceResponse([response, error], res);
 }
 
-function userLogin(req, res) {
+async function userLogin(req, res) {
   const { email, password } = req.body;
-  processServiceResponse(
-    login(email, password, req.session.id).then(([response, err]) => {
-      if (err) {
-        return [null, err];
-      }
+  let response, error;
+  if (!password || !email) {
+    error = new StatusCodeError('Missing parameters. Parameters are : email, password.')
+  } else {
+    [response, error] = await login(email, password, req.session.id);
+    if (response && !error) {
       req.session.connectedUser = response;
-      return [response, err];
-    }),
-    res
-  );
+    }
+  }
+  processServiceResponse([response, error], res);
 }
 
-function userLogout(req, res) {
-  const [, err] = checkAuthentication(req, res);
-  if (err) {
+async function userLogout(req, res) {
+
+  let [response, error] = checkAuthentication(req, res);
+  if (error) {
+    processServiceResponse([null, error], res);
     return;
   }
   const lUserId = req.session.connectedUser._id;
-  processServiceResponse(
-    logout(lUserId).then(([response, err]) => {
-      if (err) {
-        return [null, err];
-      }
-      req.session.connectedUser = null;
-      return [response, null];
-    }),
-    res
-  );
+  [response, error] = await logout(lUserId);
+  if (response) {
+    req.session.connectedUser = null;
+  }
+  processServiceResponse([response, error], res);
+
 }
 
-function getUsers(req, res) {
-  processServiceResponse(getAllUsers(), res);
+async function getUsers(req, res) {
+  const lResponse = await getAllUsers();
+  processServiceResponse(lResponse, res);
 }
 
-function deleteUserAccount(req, res) {
+async function deleteUserAccount(req, res) {
   const lPassword = req.query.password;
   const lEmail = req.query.email;
-  if (!lPassword || !lEmail) {
-    res.status(400);
-    res.json({
-      error: 'Missing parameters. Parameters are : email, password.',
-    });
-    return;
-  }
-  if (!req.session.connectedUser || !req.session.connectedUser.email) {
-    res.status(500);
-    res.json({
-      error: 'User has been disconnected.',
-    });
-    return;
-  }
-  processServiceResponse(
-    deleteAccount(lEmail, lPassword).then((response) => {
+  try {
+    if (!lPassword || !lEmail) {
+      throw new StatusCodeError('Missing parameters. Parameters are : email, password.')
+    }
+    if (!req.session.connectedUser || !req.session.connectedUser.email) {
+      throw new StatusCodeError('User has been disconnected.', 500)
+    }
+    const [response, error] = await deleteAccount(lEmail, lPassword);
+    if (response) {
       req.session.connectedUser = null;
-      return response;
-    }),
-    res
-  );
+    }
+    processServiceResponse([response, error], res);
+
+  }
+  catch (err) {
+    processServiceResponse([, err], res);
+  }
 }
 
 function isUserConnected(req, res) {
+  let lResponse = { connectedUser: null };
   if (req.session.connectedUser) {
-    res.status(200);
-    res.json({
-      connectedUser: {
-        email: req.session.connectedUser.email,
-        name: req.session.connectedUser.name,
-      },
-    });
-  } else {
-    res.status(200);
-    res.json({
-      connectedUser: null,
-    });
+    lResponse.connectedUser = {
+      email: req.session.connectedUser.email,
+      name: req.session.connectedUser.name,
+    }
   }
+  processServiceResponse([lResponse, null], res);
 }
 
 module.exports = {

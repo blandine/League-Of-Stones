@@ -1,30 +1,25 @@
 var express = require('express');
-const { createUserAccount, deleteUserAccount } = require('../controllers/usersController.js');
+const {
+  createUserAccount,
+  deleteUserAccount,
+  userLogin,
+  userLogout,
+  getUsers,
+  isUserConnected,
+} = require('../controllers/usersController.js');
 var router = express.Router();
 
-router.put('/user', async (req, res, next) => {
-  createUserAccount(req, res);
-});
+router.put('/user', createUserAccount);
 
-router.post('/login', async (req, res, next) => {
-  userLogin(req, res);
-});
+router.post('/login', userLogin);
 
-router.post('/logout', async (req, res, next) => {
-  userLogout(req, res);
-});
+router.post('/logout', userLogout);
 
 const users = '/users';
-router.get(`${users}/getAll`, (req, res, next) => {
-  getUsers(req, res);
-});
+router.get(`${users}/getAll`, getUsers);
 
-router.get(`${users}/unsubscribe`, (req, res, next) => {
-  deleteUserAccount(req, res);
-});
+router.get(`${users}/unsubscribe`, deleteUserAccount);
 
-router.get(`${users}/amIConnected`, function (req, res) {
-  isUserConnected(req, res);
-});
+router.get(`${users}/amIConnected`, isUserConnected);
 
 module.exports = router;
