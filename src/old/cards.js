@@ -1,4 +1,4 @@
-var champions = require('../championsLight.json');
+var champions = require('../../championsLight.json');
 /* Reinit champions from LOL file
 var champions = require('./champion.json');
 const fs = require('fs')
