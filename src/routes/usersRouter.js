@@ -1,5 +1,5 @@
 var express = require('express');
-const { createUserAccount, deleteUserAccount } = require('../api/usersApi');
+const { createUserAccount, deleteUserAccount } = require('../controllers/usersController.js');
 var router = express.Router();
 
 router.put('/user', async (req, res, next) => {

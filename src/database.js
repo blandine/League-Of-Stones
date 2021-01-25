@@ -35,33 +35,4 @@ const MONGO_DB = process.env.MONGO_DB || 'League_Of_Stones';
 
 }
 
-class Store{
-	static session;
-	static initSession(pSession) {
-		this.session = new pSession.MemoryStore();
-	
-	}
-	static setConnectedUser(pConnectedUser) {
-		this.session.connectedUser = pConnectedUser;
-	}
-	static getSessionId() {
-		return this.session.id;
-	}
-	static getConnectedUser() {
-		return this.session.connectedUser;
-	}
-	static getConnectedUserEmail() {
-		if(this.session && this.session.connectedUser){
-			return this.session.connectedUser.email
-		}else{
-			return null;
-		}
-	}
-	
-	static clearConnectedUser() {
-		if(this.session && this.session.connectedUser){
-			this.session.connectedUser = null;
-		} 
-    }
-}
-module.exports = {MongoDBConnection,Store};
+module.exports = {MongoDBConnection};

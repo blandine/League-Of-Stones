@@ -1,5 +1,5 @@
 var bcrypt = require('bcrypt');
-const { MongoDBConnection, Store } = require('../connection');
+const { MongoDBConnection } = require('../database');
 
 async function createAccount(pEmail, pPassword, pUsername,) {
     const lSaltRounds = 10; // cost factor
