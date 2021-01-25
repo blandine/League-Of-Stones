@@ -1,54 +1,30 @@
 var express = require('express');
+const { createUserAccount, deleteUserAccount } = require('../api/usersApi');
 var router = express.Router();
 
-const { processServiceResponse } = require('./utils');
-var { getAllUsers, deleteAccount } = require('../services/usersService');
-
-router.get('/getAll', (req, res, next) => {
-  processServiceResponse(getAllUsers(), res);
+router.put('/user', async (req, res, next) => {
+  createUserAccount(req, res);
 });
 
-router.get('/unsubscribe', (req, res, next) => {
-  const lPassword = req.query.password;
-  const lEmail = req.query.email;
-  if (!lPassword || !lEmail) {
-    res.status(400);
-    res.json({
-      error: 'Missing parameters. Parameters are : email, password.',
-    });
-    return;
-  }
-  if (!req.session.connectedUser || !req.session.connectedUser.email) {
-    res.status(500);
-    res.json({
-      error: 'User has been disconnected.',
-    });
-    return;
-  }
-  processServiceResponse(
-    deleteAccount(lEmail, lPassword).then((response) => {
-      req.session.connectedUser = null;
-      return response;
-    }),
-    res
-  );
+router.post('/login', async (req, res, next) => {
+  userLogin(req, res);
 });
 
-router.get('/amIConnected', function (req, res) {
-  if (req.session.connectedUser) {
-    res.status(200);
-    res.json({
-      connectedUser: {
-        email: req.session.connectedUser.email,
-        name: req.session.connectedUser.name,
-      },
-    });
-  } else {
-    res.status(200);
-    res.json({
-      connectedUser: null,
-    });
-  }
+router.post('/logout', async (req, res, next) => {
+  userLogout(req, res);
+});
+
+const users = '/users';
+router.get(`${users}/getAll`, (req, res, next) => {
+  getUsers(req, res);
+});
+
+router.get(`${users}/unsubscribe`, (req, res, next) => {
+  deleteUserAccount(req, res);
+});
+
+router.get(`${users}/amIConnected`, function (req, res) {
+  isUserConnected(req, res);
 });
 
 module.exports = router;
