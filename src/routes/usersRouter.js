@@ -1,17 +1,12 @@
 var express = require('express');
 const {
-  createUserAccount,
   deleteUserAccount,
-  userLogin,
   userLogout,
   getUsers,
   isUserConnected,
 } = require('../controllers/usersController.js');
 var router = express.Router();
 
-router.put('/user', createUserAccount);
-
-router.post('/login', userLogin);
 
 router.post('/logout', userLogout);
 

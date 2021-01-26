@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node bin/www.js",
     "start:w": "nodemon --exec node bin/www.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "author": "",
   "license": "ISC",
@@ -15,11 +15,18 @@
     "cors": "^2.8.4",
     "express": "^4.14.1",
     "express-session": "^1.15.1",
+    "express-winston": "^4.0.5",
     "http": "0.0.1-security",
     "mongodb": "^3.6.3",
-    "serve-favicon": "^2.5.0"
+    "serve-favicon": "^2.5.0",
+    "winston": "^3.3.3"
   },
   "devDependencies": {
-    "nodemon": "^2.0.7"
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
+    "jest": "^26.6.3",
+    "nodemon": "^2.0.7",
+    "superagent": "^6.1.0",
+    "supertest": "^6.1.3"
   }
 }

@@ -1,18 +1,18 @@
-var tools = require('../old/tools');
 var usersRouter = require('./usersRouter');
 var express = require('express');
+const { createUserAccount,userLogin } = require('../controllers/usersController');
+const { requiresAuth } = require('../middlewares');
 var router = express.Router();
-var { createAccount, login, logout } = require('../services/usersService');
-const { processServiceResponse, checkAuthentication } = require('./utils');
 
-router.get('/', function (req, res) {
-  tools.sendData(
-    res,
-    { message: 'League of Stones server is up ! Welcome :) ' },
-    req
-  );
+router.get('/', function (req, res,next) {
+  const result = { message: 'League of Stones server is up ! Welcome :) hahahahah ' }
+  res.json(result).status(200);
+  
 });
+router.put('/user', createUserAccount);
 
-router.use('/', usersRouter);
+router.post('/login', userLogin);
+
+router.use('/',requiresAuth, usersRouter);
 
 module.exports = router;

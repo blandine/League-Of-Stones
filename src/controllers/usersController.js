@@ -34,12 +34,7 @@ async function userLogin(req, res) {
 
 async function userLogout(req, res) {
 
-  let [response, error] = checkAuthentication(req, res);
-  if (error) {
-    processServiceResponse([null, error], res);
-    return;
-  }
-  const lUserId = req.session.connectedUser._id;
+  const lUserId = req.session.connectedUser.id;
   [response, error] = await logout(lUserId);
   if (response) {
     req.session.connectedUser = null;
