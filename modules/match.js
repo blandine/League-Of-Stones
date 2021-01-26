@@ -134,7 +134,7 @@ module.exports = {
                 deckRet.push({
                   key: result.key,
                   name: result.name,
-                  stats: result.stats,
+                  info: result.info,
                   title: result.title
                 });
               }
@@ -394,12 +394,12 @@ module.exports = {
                           var attackedEnnemyCard =
                             ennemyPlayer.board[iCardEnnemy];
                           if (
-                            myCard.stats.attackdamage >
-                            attackedEnnemyCard.stats.armor
+                            myCard.info.attack >
+                            attackedEnnemyCard.info.defense
                           ) {
                             var playerDamage =
-                              myCard.stats.attackdamage -
-                              attackedEnnemyCard.stats.armor;
+                              myCard.info.attack -
+                              attackedEnnemyCard.info.defense;
                             ennemyPlayer.board.splice(iCardEnnemy, 1);
                             ennemyPlayer.hp -= playerDamage;
                             if (ennemyPlayer.hp <= 0) {
@@ -408,8 +408,8 @@ module.exports = {
                               result.status = 'Player ' + numPlayer + ' won';
                             }
                           } else if (
-                            myCard.stats.attackdamage <
-                            attackedEnnemyCard.stats.armor
+                            myCard.info.attack <
+                            attackedEnnemyCard.info.defense
                           ) {
                             player.board.splice(iCard, 1);
                           } else {
@@ -422,7 +422,7 @@ module.exports = {
                           tools.sendData(
                             res,
                             {
-                              status: result.stats,
+                              status: result.info,
                               player1: {
                                 board: result.player1.board,
                                 hp: result.player1.hp
@@ -496,7 +496,7 @@ module.exports = {
                       if (ennemyPlayer.board.length === 0) {
                         var myCard = player.board[iCard];
                         myCard.attack = true;
-                        var playerDamage = myCard.stats.attackdamage;
+                        var playerDamage = myCard.info.attack;
                         ennemyPlayer.hp -= playerDamage;
                         if (ennemyPlayer.hp <= 0) {
                           ennemyPlayer.turn = false;
@@ -509,7 +509,7 @@ module.exports = {
                         tools.sendData(
                           res,
                           {
-                            status: result.stats,
+                            status: result.info,
                             player1: {
                               board: result.player1.board,
                               hp: result.player1.hp
