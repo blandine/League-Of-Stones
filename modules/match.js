@@ -414,7 +414,7 @@ module.exports = {
                             player.board.splice(iCard, 1);
                           } else {
                             player.board.splice(iCard, 1);
-                            ennemyCard.board.splice(iCardEnnemy, 1);
+                            ennemyPlayer.board.splice(iCardEnnemy, 1);
                           }
                           losDB
                             .collection('Match')
