@@ -18,7 +18,7 @@ router.post('/login', userLogin);
 
 router.get('/cards', async function(req,res){
   const [response,err] = await getCardsService();
-  processServiceResponse([response,err],res)
+  sendResponse([response,err],res)
 });
 router.use('/',requiresAuth, usersRouter);
 router.use('/match',requiresAuth, matchRouter);

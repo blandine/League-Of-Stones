@@ -1,4 +1,4 @@
-const { processServiceResponse, StatusCodeError } = require('../routes/utils');
+const { sendResponse, StatusCodeError, sendError } = require('../routes/utils');
 var {
   getAllUsers,
   deleteAccount,
@@ -9,43 +9,43 @@ var {
 
 async function createUserAccount(req, res) {
   const { name, email, password } = req.body;
-  let response, error;
   if (!password || !email || !name) {
-    error = new StatusCodeError('Missing parameters. Parameters are : name, email, password.')
-  } else {
-    [response, error] = await createAccount(email, password, name);
-  }
-  processServiceResponse([response, error], res);
+    const error = new StatusCodeError('Missing parameters. Parameters are : name, email, password.')
+    sendError(error,res)
+  } 
+
+  const response = await createAccount(email, password, name);
+  sendResponse(response, res);
 }
 
 async function userLogin(req, res) {
   const { email, password } = req.body;
-  let response, error;
   if (!password || !email) {
-    error = new StatusCodeError('Missing parameters. Parameters are : email, password.')
+    const error = new StatusCodeError('Missing parameters. Parameters are : email, password.')
+    sendError(error,res)
   } else {
-    [response, error] = await login(email, password, req.session.id);
-    if (response && !error) {
-      req.session.connectedUser = response;
+    const [result, error] = await login(email, password, req.session.id);
+    if (result && !error) {
+      req.session.connectedUser = result;
     }
+    sendResponse([result, error], res);
   }
-  processServiceResponse([response, error], res);
 }
 
 async function userLogout(req, res) {
 
   const lUserId = req.session.connectedUser.id;
-  [response, error] = await logout(lUserId);
-  if (response) {
+  const [result, error] = await logout(lUserId);
+  if (result) {
     req.session.connectedUser = null;
   }
-  processServiceResponse([response, error], res);
+  sendResponse([result, error], res);
 
 }
 
 async function getUsers(req, res) {
   const lResponse = await getAllUsers();
-  processServiceResponse(lResponse, res);
+  sendResponse(lResponse, res);
 }
 
 async function deleteUserAccount(req, res) {
@@ -58,15 +58,15 @@ async function deleteUserAccount(req, res) {
     if (!req.session.connectedUser || !req.session.connectedUser.email) {
       throw new StatusCodeError('User has been disconnected.', 500)
     }
-    const [response, error] = await deleteAccount(lEmail, lPassword);
-    if (response) {
+    const [result, error] = await deleteAccount(lEmail, lPassword);
+    if (result) {
       req.session.connectedUser = null;
     }
-    processServiceResponse([response, error], res);
+    sendResponse([result, error], res);
 
   }
   catch (err) {
-    processServiceResponse([, err], res);
+    sendError(err, res);
   }
 }
 
@@ -78,7 +78,7 @@ function isUserConnected(req, res) {
       name: req.session.connectedUser.name,
     }
   }
-  processServiceResponse([lResponse, null], res);
+  sendResponse([lResponse, null], res);
 }
 
 module.exports = {

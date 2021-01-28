@@ -6,14 +6,19 @@ class StatusCodeError {
     this.code = code ? code : 400;
   }
 }
-function processServiceResponse(pServiceResponse, res) {
-  let [lResult, error] = pServiceResponse;
+
+
+function sendResponse([response, error], res) {
   if (error) {
-    //console.error('Caught error : ' + error);
-    res.status(error.code == undefined ? 400 : error.code);
-    res.json(error);
+    sendError(error,res); 
   } else {
-    res.json(lResult);
+    res.json(response);
   }
 }
-module.exports = { processServiceResponse, StatusCodeError };
+
+function sendError(error, res) {
+    //console.error('Caught error : ' + error);
+    res.status(error.code == undefined ? 400 : error.code);
+    res.json(error); 
+}
+module.exports = { sendResponse,sendError, StatusCodeError };
