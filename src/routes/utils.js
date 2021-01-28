@@ -7,18 +7,20 @@ class StatusCodeError {
   }
 }
 
-
 function sendResponse([response, error], res) {
   if (error) {
-    sendError(error,res); 
+    sendError(error, res);
   } else {
+    if(typeof response == 'string'){
+      response = {message:response};
+    }
     res.json(response);
   }
 }
 
 function sendError(error, res) {
-    //console.error('Caught error : ' + error);
-    res.status(error.code == undefined ? 400 : error.code);
-    res.json(error); 
+  //console.error('Caught error : ' + error);
+  res.status(error.code == undefined ? 400 : error.code);
+  res.json(error);
 }
-module.exports = { sendResponse,sendError, StatusCodeError };
+module.exports = { sendResponse, sendError, StatusCodeError };

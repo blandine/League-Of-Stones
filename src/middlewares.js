@@ -15,7 +15,7 @@ function requiresAuth(req, res, next) {
                 next(createError(401, error));
                 return;
             }
-            if (session && session.connectedUser) {
+            if (session && session.connectedUser !==null) {
                 req.session = session;
                 next();
             }

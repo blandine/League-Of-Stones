@@ -32,7 +32,9 @@ const MONGO_DB = process.env.MONGO_DB || 'League_Of_Stones';
     static getCardsCollection() {
 		return MongoDBConnection.db.collection(`Cards`);
 	}
-
+	static dropDatabase() {
+		return MongoDBConnection.db.dropDatabase();
+	}
 }
 
 module.exports = {MongoDBConnection};

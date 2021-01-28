@@ -1,6 +1,6 @@
 var express = require('express');
 const {
-  getMatchData,getAllMatches,initDeck,pickCard,playCard,attackCard,endTurn,finishMatch
+  getMatchData, getAllMatches, initDeck, pickCard, playCard, attackCard, endTurn, finishMatch
 } = require('../controllers/matchController.js');
 var router = express.Router();
 

@@ -1,27 +1,34 @@
-const usersRouter = require('./usersRouter');
-const matchRouter = require('./matchRouter');
-
 var express = require('express');
-const { createUserAccount,userLogin } = require('../controllers/usersController');
-const { requiresAuth } = require('../middlewares');
-const { getCardsService } = require('../services/cardsService');
 const router = express.Router();
 
-router.get('/', function (req, res,next) {
-  const result = { message: 'League of Stones server is up ! Welcome :) hahahahah ' }
-  res.json(result).status(200);
-  
-});
-router.put('/user', createUserAccount);
+const { requiresAuth } = require('../middlewares');
+const usersRouter = require('./usersRouter');
+const matchRouter = require('./matchRouter');
+const matchmakingRouter = require('./matchmakingRouter');
 
+
+const { createUserAccount, userLogin } = require('../controllers/usersController');
+const { getCards } = require('../controllers/cardsController');
+const { deleteDb } = require('../services/serverService');
+
+
+router.get('/', function (req, res, next) {
+  const message =  'League of Stones server is up ! Welcome :) hahahahah ' ;
+  sendResponse([message,null],res);
+});
+
+router.get('/resetServer', async function (req, res, next) {
+  const lResult = await deleteDb();
+  sendResponse(lResult,res);
+});
+
+router.put('/user', createUserAccount);
 router.post('/login', userLogin);
 
-router.get('/cards', async function(req,res){
-  const [response,err] = await getCardsService();
-  sendResponse([response,err],res)
-});
-router.use('/',requiresAuth, usersRouter);
-router.use('/match',requiresAuth, matchRouter);
+router.get('/cards', getCards);
+router.use('/', requiresAuth, usersRouter);
+router.use('/match', requiresAuth, matchRouter);
+router.use('/matchmaking', requiresAuth, matchmakingRouter);
 
 
 module.exports = router;
