@@ -571,6 +571,8 @@ module.exports = {
                 player.cardPicked = false;
                 player.turn = false;
                 ennemyPlayer.turn = true;
+                const numEnemy =numPlayer == 1 ? 2 : 1;
+                result.status = `Turn : player ${numEnemy}`
                 losDB
                   .collection('Match')
                   .update({ _id: new ObjectId(result._id) }, result);
