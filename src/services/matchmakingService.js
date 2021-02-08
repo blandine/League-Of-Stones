@@ -118,10 +118,10 @@ async function sendRequestService(pMatchmakingId, pPlayerId, pPlayerName) {
 async function removeMatchByPlayerId(pPlayerId) {
     const lCollection = await MongoDBConnection.getMatchCollection();
 
-    lCollection.remove({
+    lCollection.deleteMany({
         'player1.id': new ObjectId(pPlayerId)
     });
-    lCollection.remove({
+    lCollection.deleteMany({
         'player2.id': new ObjectId(pPlayerId)
     });
 }

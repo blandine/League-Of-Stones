@@ -1,4 +1,5 @@
 var bcrypt = require('bcrypt');
+const { StatusCodeError } = require('../routes/utils.js');
 const { MongoDBConnection } = require('../utils/database.js');
 
 async function createAccount(pEmail, pPassword, pUsername) {
@@ -35,7 +36,7 @@ async function userExists(pEmail, pPassword){
         if (!lIsSameHash) {
             return [null, 'Email or password incorrect'];
         }
-        return [lUserResult, null]
+        return [lUserResult, null];
     }
     catch (e) {
         return [null, e]
@@ -64,7 +65,7 @@ async function login(pEmail, pPassword, pToken) {
 
 async function logout(pUserId) {
     try {
-        await clearUserPresence(pUserId)
+        await clearUserPresence(pUserId);
         return ["Disconnected", null];
     } catch (error) {
         return [null, error];
@@ -73,12 +74,12 @@ async function logout(pUserId) {
 
 async function deleteAccount(pEmail, pPassword) {
     try {
-        const [lUserResult, lError] = userExists(pEmail, pPassword);
+        const [lUserResult, lError] = await userExists(pEmail, pPassword);
         if (lError) {
             return [null, lError];
         }
         const lCollection = await MongoDBConnection.getUsersCollection();
-        const lUserIsRemoved = await lCollection.remove({ _id:lUserResult._id})
+        const lUserIsRemoved = await lCollection.deleteOne({ _id:lUserResult._id})
         if (!lUserIsRemoved) {
             return [null, 'Error during user deletion'];
         }

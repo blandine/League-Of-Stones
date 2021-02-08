@@ -11,8 +11,8 @@ async function createUserAccount(req, res) {
   const { name, email, password } = req.body;
   if (!password || !email || !name) {
     const error = new StatusCodeError('Missing parameters. Parameters are : name, email, password.')
-    sendError(error,res)
-  } 
+    sendError(error, res)
+  }
 
   const response = await createAccount(email, password, name);
   sendResponse(response, res);
@@ -22,7 +22,7 @@ async function userLogin(req, res) {
   const { email, password } = req.body;
   if (!password || !email) {
     const error = new StatusCodeError('Missing parameters. Parameters are : email, password.')
-    sendError(error,res)
+    sendError(error, res)
   } else {
     const [result, error] = await login(email, password, req.session.id);
     if (result && !error) {
@@ -39,7 +39,9 @@ async function userLogout(req, res) {
   if (result) {
     req.session.connectedUser = null;
   }
+
   sendResponse([result, error], res);
+
 
 }
 

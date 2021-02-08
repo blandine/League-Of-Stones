@@ -16,11 +16,12 @@ function requiresAuth(req, res, next) {
                 return;
             }
             if (session && session.connectedUser !==null) {
-                req.session = session;
+                req.session.connectedUser = {...session.connectedUser};
                 next();
             }
             else {
-                req.session = null;
+                delete req.session.connectedUser;
+                delete req.session.matchmakindId;
                 next(createError(401, "User not connected."));
             }
         }

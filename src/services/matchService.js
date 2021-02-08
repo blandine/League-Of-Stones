@@ -27,11 +27,11 @@ async function getCurrentMatch(pPlayingPlayerId) {
 
 async function removeMatch(pMatchId) {
     const lCollection = await MongoDBConnection.getMatchCollection();
-    return lCollection.remove({_id: new ObjectId(pMatchId) });
+    return lCollection.deleteOne({_id: new ObjectId(pMatchId) });
 }
 async function removeMatchmaking(pMatchId) {
     const lCollection = await MongoDBConnection.getMatchmakingsCollection();
-    return lCollection.remove({ 'match._id': new ObjectId(pMatchId) });
+    return lCollection.deleteMany({ 'match._id': new ObjectId(pMatchId) });
 }
 function getConnectedPlayer(pPlayingPlayerId, pMatch) {
     return pPlayingPlayerId == pMatch[PLAYER1].id ? PLAYER1 : PLAYER2;
@@ -479,7 +479,7 @@ async function finishMatchService(pPlayingPlayerId) {
         }
         const lMatchId = lMatchDocument._id;
         await removeMatch(lMatchId)
-        await removeMatchmaking(lMatchId)
+        await removeMatchmaking(lMatchId);
         return [lMatchDocument.status, null];
     } catch (error) {
         return [null, new StatusCodeError(error, 400)];
