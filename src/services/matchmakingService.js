@@ -5,7 +5,7 @@ const ObjectId = require('mongodb').ObjectID;
 
 async function getMatchmakingById(pMatchmakingId) {
     const lCollection = await MongoDBConnection.getMatchmakingsCollection();
-    return lCollection.findOne({ _id: new ObjectId(pMatchmakingId) });
+    return lCollection.find({ _id: new ObjectId(pMatchmakingId) });
 }
 
 async function removeMatchmakingIdFromRequests(pMatchmakingId) {
@@ -77,6 +77,9 @@ async function participateService(pUser) {
             matchmakingId: lInsertedMatchmaking.insertedId.toString(),
             request: []
         }
+    }
+    if(lResult.matchmakingId == undefined){
+        throw new Error("undefined matchmaking")
     }
     return [lResult, null];
 }

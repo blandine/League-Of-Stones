@@ -51,7 +51,7 @@ async function login(pEmail, pPassword, pToken) {
             return [null, lError];
         }
         const lSessionInfo = {
-            id: lUserResult._id,
+            id: lUserResult._id.toString(),
             token: pToken,
             email: lUserResult.email,
             name: lUserResult.name

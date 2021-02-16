@@ -4,7 +4,6 @@ const MONGO_URL = process.env.MONGO_URL || 'mongodb://localhost:27017';
 const MONGO_DB = process.env.MONGO_DB || 'League_Of_Stones';
  class MongoDBConnection {
 	static db;
-	static sessionStore;
 	static client;
 
 
