@@ -86,18 +86,18 @@ async function deleteAccount(pEmail, pPassword) {
         await clearUserPresence(lUserResult._id)
         return [lUserIsRemoved, null];
     } catch (error) {
-        return [null, `Error during inserting a user : ${error}`];
+        return [null, `Error during removing a user : ${error}`];
     }
 }
 
 async function clearUserPresence(pUserId){
     const lMatchmakingCollection = await MongoDBConnection.getMatchmakingsCollection();
     const lMatchCollection = await MongoDBConnection.getMatchCollection();
-    lMatchmakingCollection.deleteMany({ 'user._id': pUserId });
-    lMatchmakingCollection.deleteMany({ 'match.player1.id': pUserId });
-    lMatchmakingCollection.deleteMany({ 'match.player2.id': pUserId });
-    lMatchCollection.deleteMany({ 'player1.id': pUserId });
-    lMatchCollection.deleteMany({ 'player2.id': pUserId });
+    await lMatchmakingCollection.deleteMany({ 'user._id': pUserId });
+    await lMatchmakingCollection.deleteMany({ 'match.player1.id': pUserId });
+    await lMatchmakingCollection.deleteMany({ 'match.player2.id': pUserId });
+    await lMatchCollection.deleteMany({ 'player1.id': pUserId });
+    await lMatchCollection.deleteMany({ 'player2.id': pUserId });
 }
 
 async function getAllUsers() {

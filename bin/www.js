@@ -11,7 +11,7 @@ server.on('error', onError);
 server.on('listening', onListening);
 server.on('listening', async () => {
   try {
-    await MongoDBConnection.connect()
+    await MongoDBConnection.connect();
     logger.info('MONGO DB initialised : ' + MongoDBConnection.db.databaseName);
 
   } catch (err) {

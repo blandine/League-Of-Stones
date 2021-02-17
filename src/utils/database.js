@@ -2,38 +2,47 @@ const MongoClient = require('mongodb').MongoClient;
 
 const MONGO_URL = process.env.MONGO_URL || 'mongodb://localhost:27017';
 const MONGO_DB = process.env.MONGO_DB || 'League_Of_Stones';
- class MongoDBConnection {
+class MongoDBConnection {
 	static db;
-	static client;
+	static connection;
 
 
 	static connect() {
-		return new Promise((resolve, reject) => {
-			MongoClient.connect(MONGO_URL, { useUnifiedTopology: true, useNewUrlParser: true }, (err, client) => {
-				if (err) {
-					reject(err);
-				} else {
-					this.db = client.db(MONGO_DB);
-					resolve(this.db);
-				}
-			});
+		return new Promise(async (resolve, reject) => {
+			try {
+				this.connection = await MongoClient.connect(MONGO_URL, {
+					useNewUrlParser: true,
+					useUnifiedTopology: true,
+				});
+				this.db = await this.connection.db(MONGO_DB)
+				resolve(this.db)
+			} catch (error) {
+				reject(error)
+			}
 		});
 	}
-    static getUsersCollection() {
-		return MongoDBConnection.db.collection(`Users`);
+	static async close() {
+		try {
+			await this.connection.close();
+		} catch (error) {
+			console.log("mongo error", error)
+		}
 	}
-    static getMatchmakingsCollection() {
-		return MongoDBConnection.db.collection(`Matchmaking`);
+	static getUsersCollection() {
+		return this.db.collection(`Users`);
 	}
-    static getMatchCollection() {
-		return MongoDBConnection.db.collection(`Matchs`);
+	static getMatchmakingsCollection() {
+		return this.db.collection(`Matchmaking`);
 	}
-    static getCardsCollection() {
-		return MongoDBConnection.db.collection(`Cards`);
+	static getMatchCollection() {
+		return this.db.collection(`Matchs`);
+	}
+	static getCardsCollection() {
+		return this.db.collection(`Cards`);
 	}
 	static dropDatabase() {
-		return MongoDBConnection.db.dropDatabase();
+		return this.db.dropDatabase();
 	}
 }
 
-module.exports = {MongoDBConnection};
+module.exports = { MongoDBConnection };
