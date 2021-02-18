@@ -1,4 +1,5 @@
 const { sendResponse, StatusCodeError, sendError } = require('../routes/utils');
+
 const {
   getMatchDataService,
   getAllMatchesService,
@@ -12,6 +13,10 @@ const {
 } = require('../services/matchService');
 
 async function getMatchData(req, res) {
+  if(!req.session.connectedUser || !req.session.connectedUser.id){
+    sendError(new StatusCodeError("Session is invalid",400),res);
+    return;
+  }
   const lPlayingPlayerId = req.session.connectedUser.id;
   const response = await getMatchDataService(lPlayingPlayerId);
   sendResponse(response, res);

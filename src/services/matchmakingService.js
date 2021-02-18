@@ -10,15 +10,15 @@ async function getMatchmakingById(pMatchmakingId) {
 
 async function removeMatchmakingIdFromRequests(pMatchmakingId) {
     const lCollection = await MongoDBConnection.getMatchmakingsCollection();
-    return lCollection.update({}, { $pull: { request: { matchmakingId: pMatchmakingId } } }, { multi: true });
+    return lCollection.updateMany({}, { $pull: { request: { matchmakingId: pMatchmakingId } } }, { multi: true });
 }
 
 async function addMatchmakingRequest(pMatchmakingId, pRequest) {
     const lCollection = await MongoDBConnection.getMatchmakingsCollection();
     return lCollection
-        .update(
+        .updateOne(
             { _id: new ObjectId(pMatchmakingId) },
-            { $push: { request: pRequest } }
+            { $addToSet: { request: {$each:[pRequest]} } }
         )
 }
 async function isMatchmakingIdRequestable(pMatchmakingId, pRequestedMatchmakingId) {
@@ -113,8 +113,10 @@ async function sendRequestService(pMatchmakingId, pPlayerId, pPlayerName) {
         matchmakingId: pMatchmakingId,
         name: pPlayerName
     }
-    await addMatchmakingRequest(pMatchmakingId, lRequest)
-
+    const lRes=await addMatchmakingRequest(pMatchmakingId, lRequest)
+    if(lRes.result.nModified){
+        return ["Request already sent", null];
+    }
     return ["Request sent", null];
 }
 
@@ -132,7 +134,7 @@ async function removeMatchByPlayerId(pPlayerId) {
 async function updateMatchmakingById(pMatchmakingId, pMatch) {
     const lCollection = await MongoDBConnection.getMatchmakingsCollection();
 
-    lCollection.update(
+    lCollection.updateOne(
         { _id: new ObjectId(pMatchmakingId) },
         { $set: { request: [], match: pMatch } }
     );

@@ -3,7 +3,7 @@ const request = require("supertest");
 const { MongoDBConnection } = require("../src/utils/database.js");
 const { deleteAccount, createAccount, login } = require("../src/services/usersService.js");
 const { SingleStore } = require("../src/utils/session.js");
-
+const time=10000000;
 const user = {
   email: 'cat@cat.com',
   name: 'Cat',
@@ -29,6 +29,18 @@ async function requestLogin(pUser) {
 async function requestParticipate(pToken) {
   return request(app)
     .get("/matchmaking/participate")
+    .set('WWW-authenticate', pToken);
+}
+async function requestSendRequest(pToken,pRequestedId) {
+  return request(app)
+    .get("/matchmaking/request?matchmakingId="+pRequestedId)
+    .set('WWW-authenticate', pToken);
+}
+
+
+async function requestAcceptRequest(pToken,pRequestedId) {
+  return request(app)
+    .get("/matchmaking/acceptRequest?matchmakingId="+pRequestedId)
     .set('WWW-authenticate', pToken);
 }
 describe("Test the root path up", () => {
@@ -145,14 +157,12 @@ describe("Test the root path up", () => {
 
     afterAll(async (done) => {
       // Connect to a Mongo DB
-      await deleteAccount(user1.email, user1.password);
-      await deleteAccount(user2.email, user2.password);
       done();
     })
 
     test("participate existing user", async done => {
       let lUserInfo = (await requestLogin(user1)).body;
-      let response = requestParticipate(lUserInfo.token);
+      let response = await requestParticipate(lUserInfo.token);
       expect(response.statusCode).toBe(200);
       expect(typeof response.body.matchmakingId).toBe("string");
       expect(response.body.request).toHaveLength(0);
@@ -181,7 +191,28 @@ describe("Test the root path up", () => {
       let lMMId2 = response1.body.matchmakingId;
       expect(lMMId1).not.toEqual(lMMId2);
       done();
-    },10000);
+    });
+
+
+    test("request other user", async done => {
+      let lUserInfo = (await requestLogin(user1)).body;
+      let lUserInfo2 = (await requestLogin(user2)).body;
+      let lMMId1 = (await requestParticipate(lUserInfo.token)).body.matchmakingId;
+      let lMMId2 = (await requestParticipate(lUserInfo2.token)).body.matchmakingId;
+      const lRes = (await requestSendRequest(lUserInfo.token,lMMId2)).body;
+      expect(lRes).toEqual({message:"Request sent"})
+      let lMMRequests2 = (await requestParticipate(lUserInfo2.token)).body.request;
+
+      expect(lMMRequests2).toHaveLength(1);
+      const lResbis = (await requestSendRequest(lUserInfo.token,lMMId2)).body;
+      expect(lResbis).toEqual({message:"Request sent"})
+      const lRester = (await requestSendRequest(lUserInfo.token,lMMId2)).body;
+      expect(lRester).toEqual({message:"Request sent"})
+      let lMMRequests2bis = (await requestParticipate(lUserInfo2.token)).body.request;
+      expect(lMMRequests2bis).toHaveLength(1);
+
+      done();
+    },time);
   });
 
 });

@@ -94,20 +94,20 @@ function getMatchResponse(pPlayingPlayerId, pMatch) {
 
 async function updateMatch(pMatchId, pNewMatch) {
     const lCollection = await MongoDBConnection.getMatchCollection();
-    return lCollection.update({ _id: new ObjectId(pMatchId) }, pNewMatch);
+    return lCollection.updateOne({ _id: new ObjectId(pMatchId) }, pNewMatch);
 }
 
 async function updatePlayerDeck(pMatchId, pPlayer, pDeck) {
     const lCollection = await MongoDBConnection.getMatchCollection();
     const key = `${pPlayer}.deck`;
-    return lCollection.update(
+    return lCollection.updateOne(
         { _id: new ObjectId(pMatchId) },
         { $set: { [key]: pDeck } }
     );
 }
 async function updateMatchStatus(pMatchId, status) {
     const lCollection = await MongoDBConnection.getMatchCollection();
-    return lCollection.update(
+    return lCollection.updateOne(
         { _id: new ObjectId(pMatchId) },
         { $set: { status: status } }
     );
