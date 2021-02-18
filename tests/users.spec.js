@@ -1,15 +1,36 @@
 const app = require("../src/app.js");
 const request = require("supertest");
 const { MongoDBConnection } = require("../src/utils/database.js");
-const { deleteAccount, createAccount } = require("../src/services/usersService.js");
+const { deleteAccount, createAccount, login } = require("../src/services/usersService.js");
+const { SingleStore } = require("../src/utils/session.js");
 
 const user = {
   email: 'cat@cat.com',
-  name: 'Manny',
-  password: "test"
+  name: 'Cat',
+  password: "C4t"
 }
 
+const user1 = {
+  email: 'foxy@cat.com',
+  name: 'Foxy',
+  password: "f0xY"
+}
+const user2 = {
+  email: 'nell@cat.com',
+  name: 'Nell',
+  password: "n3lL"
+}
 
+async function requestLogin(pUser) {
+  return request(app)
+    .post("/login")
+    .send({ email: pUser.email, password: pUser.password })
+}
+async function requestParticipate(pToken) {
+  return request(app)
+    .get("/matchmaking/participate")
+    .set('WWW-authenticate', pToken);
+}
 describe("Test the root path up", () => {
   beforeAll(async (done) => {
     // Connect to a Mongo DB
@@ -77,14 +98,11 @@ describe("Test the root path up", () => {
       done();
     })
 
-    test("Login existing user", done => {
-      return request(app)
-        .post("/login")
-        .send({ email: user.email, password: user.password })
-        .then(response => {
-          expect(response.statusCode).toBe(200);
-          done();
-        });
+    test("Login existing user", async done => {
+      let response = await requestLogin(user);
+      expect(response.statusCode).toBe(200);
+      done();
+
     });
   });
   describe("Test the deconnexion", () => {
@@ -100,10 +118,8 @@ describe("Test the root path up", () => {
       done();
     })
 
-    test("Logout existing user",async done => {
-      let response = await request(app)
-        .post("/login")
-        .send({ email: user.email, password: user.password })
+    test("Logout existing user", async done => {
+      let response = await requestLogin(user)
       expect(response.statusCode).toBe(200);
       expect(typeof response.body.token).toBe("string")
       let responseLogout = await request(app)
@@ -112,5 +128,60 @@ describe("Test the root path up", () => {
       expect(responseLogout.statusCode).toBe(200);
       done();
     });
+
+
   });
+  let lUserInfo;
+  let lUserInfo2;
+  describe("Test the participate", () => {
+    beforeAll(async (done) => {
+      // Connect to a Mongo DB
+      await createAccount(user1.email, user1.password, user1.name);
+
+      await createAccount(user2.email, user2.password, user2.name);
+      done();
+
+    })
+
+    afterAll(async (done) => {
+      // Connect to a Mongo DB
+      await deleteAccount(user1.email, user1.password);
+      await deleteAccount(user2.email, user2.password);
+      done();
+    })
+
+    test("participate existing user", async done => {
+      let lUserInfo = (await requestLogin(user1)).body;
+      let response = requestParticipate(lUserInfo.token);
+      expect(response.statusCode).toBe(200);
+      expect(typeof response.body.matchmakingId).toBe("string");
+      expect(response.body.request).toHaveLength(0);
+      done();
+    });
+
+    test("participate twice existing user", async done => {
+      let lUserInfo = (await requestLogin(user1)).body;
+      let response = await requestParticipate(lUserInfo.token);
+      expect(response.statusCode).toBe(200);
+      const lMMId1 = response.body.matchmakingId;
+      let response1 = await requestParticipate(lUserInfo.token);
+      expect(response1.statusCode).toBe(200);
+      let lMMId2 = response1.body.matchmakingId;
+      expect(lMMId1).toEqual(lMMId2);
+      done();
+    });
+
+    test("participate other user", async done => {
+      let lUserInfo = (await requestLogin(user1)).body;
+      let lUserInfo2 = (await requestLogin(user2)).body;
+      let response = await requestParticipate(lUserInfo.token);
+      const lMMId1 = response.body.matchmakingId;
+      let response1 = await requestParticipate(lUserInfo2.token);
+      expect(response1.statusCode).toBe(200);
+      let lMMId2 = response1.body.matchmakingId;
+      expect(lMMId1).not.toEqual(lMMId2);
+      done();
+    },10000);
+  });
+
 });

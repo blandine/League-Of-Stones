@@ -6,6 +6,7 @@ var {
   login,
   logout,
 } = require('../services/usersService');
+const { SingleStore } = require('../utils/session');
 
 async function createUserAccount(req, res) {
   const { name, email, password } = req.body;
@@ -37,7 +38,12 @@ async function userLogout(req, res) {
   const lUserId = req.session.connectedUser.id;
   const [result, error] = await logout(lUserId);
   if (result) {
-    req.session.connectedUser = null;
+    SingleStore.sessionStore.destroy(
+      req.session.connectedUser.token,//todo: check me
+      function (error, session) {
+       console.log("session destroyed")
+      }
+    )
   }
 
   sendResponse([result, error], res);
@@ -62,7 +68,12 @@ async function deleteUserAccount(req, res) {
     }
     const [result, error] = await deleteAccount(lEmail, lPassword);
     if (result) {
-      req.session.connectedUser = null;
+      SingleStore.sessionStore.destroy(
+        req.session.connectedUser.token,//todo: check me
+        function (error, session) {
+         console.log("session destroyed")
+        }
+      )
     }
     sendResponse([result, error], res);
 

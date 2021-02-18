@@ -14,13 +14,13 @@ const { sendResponse } = require('./utils');
 
 
 router.get('/', function (req, res, next) {
-  const message =  'League of Stones server is up ! Welcome :) hahahahah ' ;
-  sendResponse([message,null],res);
+  const message = 'League of Stones server is up ! Welcome :) hahahahah ';
+  sendResponse([message, null], res);
 });
 
 router.get('/resetServer', async function (req, res, next) {
   const lResult = await deleteDb();
-  sendResponse(lResult,res);
+  sendResponse(lResult, res);
 });
 
 router.put('/user', createUserAccount);
