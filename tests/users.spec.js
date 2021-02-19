@@ -26,6 +26,11 @@ async function requestLogin(pUser) {
     .post("/login")
     .send({ email: pUser.email, password: pUser.password })
 }
+async function requestLogout(pToken) {
+  return await request(app)
+  .post("/logout")
+  .set('WWW-authenticate', pToken)
+}
 async function requestParticipate(pToken) {
   return request(app)
     .get("/matchmaking/participate")
@@ -143,9 +148,7 @@ describe("Test the root path up", () => {
 
 
   });
-  let lUserInfo;
-  let lUserInfo2;
-  describe("Test the participate", () => {
+  describe("matchmaking",()=>{
     beforeAll(async (done) => {
       // Connect to a Mongo DB
       await createAccount(user1.email, user1.password, user1.name);
@@ -159,60 +162,128 @@ describe("Test the root path up", () => {
       // Connect to a Mongo DB
       done();
     })
+    describe("Test the participate", () => {
 
-    test("participate existing user", async done => {
-      let lUserInfo = (await requestLogin(user1)).body;
-      let response = await requestParticipate(lUserInfo.token);
-      expect(response.statusCode).toBe(200);
-      expect(typeof response.body.matchmakingId).toBe("string");
-      expect(response.body.request).toHaveLength(0);
-      done();
+  
+      test("participate without loging", async done => {
+        let lUserInfo = (await requestLogin(user1)).body;
+        let logout = (await requestLogout(lUserInfo.token));
+  
+        let response = await requestParticipate(lUserInfo.token);
+        expect(response.statusCode).toBe(401);
+        expect(response.body.message).toBe("User not connected.");
+        done();
+      });
+  
+      test("participate existing user", async done => {
+        let lUserInfo = (await requestLogin(user1)).body;
+        let response = await requestParticipate(lUserInfo.token);
+        expect(response.statusCode).toBe(200);
+        expect(typeof response.body.matchmakingId).toBe("string");
+        expect(response.body.request).toHaveLength(0);
+        done();
+      });
+  
+      test("participate twice existing user", async done => {
+        let lUserInfo = (await requestLogin(user1)).body;
+        let response = await requestParticipate(lUserInfo.token);
+        expect(response.statusCode).toBe(200);
+        const lMMId1 = response.body.matchmakingId;
+        let response1 = await requestParticipate(lUserInfo.token);
+        expect(response1.statusCode).toBe(200);
+        let lMMId2 = response1.body.matchmakingId;
+        expect(lMMId1).toEqual(lMMId2);
+        done();
+      });
+  
+      test("participate other user", async done => {
+        let lUserInfo = (await requestLogin(user1)).body;
+        let lUserInfo2 = (await requestLogin(user2)).body;
+        let response = await requestParticipate(lUserInfo.token);
+        const lMMId1 = response.body.matchmakingId;
+        let response1 = await requestParticipate(lUserInfo2.token);
+        expect(response1.statusCode).toBe(200);
+        let lMMId2 = response1.body.matchmakingId;
+        expect(lMMId1).not.toEqual(lMMId2);
+        done();
+      });
+  
+    })
+    describe("send request",()=>{
+      let lUserInfo;
+      let lUserInfo2;
+      beforeAll(async (done) => {
+        
+        lUserInfo= (await requestLogin(user1)).body;
+        lUserInfo2 = (await requestLogin(user2)).body;
+        done();
+  
+      })
+  
+      afterAll(async (done) => {
+        // Connect to a Mongo DB
+        
+        const logoutRes = (await requestLogout(lUserInfo2.token));
+        const logoutRes2 = (await requestLogout(lUserInfo2.token));
+        done();
+      })
+      test("request other user", async done => {
+        let lMMId1 = (await requestParticipate(lUserInfo.token)).body.matchmakingId;
+        let lMMId2 = (await requestParticipate(lUserInfo2.token)).body.matchmakingId;
+        
+        const lRes = (await requestSendRequest(lUserInfo.token,lMMId2)).body;
+        expect(lRes).toEqual({message:"Request sent"})
+        
+        let lMMRequests2 = (await requestParticipate(lUserInfo2.token)).body.request;
+        expect(lMMRequests2).toHaveLength(1);
+  
+        const lResbis = (await requestSendRequest(lUserInfo.token,lMMId2)).body;
+        expect(lResbis).toEqual({message:"Request sent"})
+        
+        let lMMRequests2bis = (await requestParticipate(lUserInfo2.token)).body.request;
+        expect(lMMRequests2bis).toHaveLength(1);
+  
+        done();
+      },time);
+  
+      test("send request without participating", async done => {
+        let response1 = await requestParticipate(lUserInfo2.token);
+        const lMMId2 = response1.body.matchmakingId;
+    
+        const lRes = (await requestSendRequest(lUserInfo.token,lMMId2));
+        expect(lRes.body.message).toEqual("Your matchmakingId is undefined. Participate first")
+        expect(lRes.statusCode).toEqual(400)
+    
+        done();
+      });
+    
+      test("send request to disconected user", async done => {
+        let response1 = await requestParticipate(lUserInfo1.token);
+        const lMMId1 = response1.body.matchmakingId;
+        let response2 = await requestParticipate(lUserInfo2.token);
+        const lMMId2 = response2.body.matchmakingId;
+    
+         const logoutRes = (await requestLogout(lUserInfo2.token));
+        const lRes = (await requestSendRequest(lUserInfo1.token,lMMId2));
+        expect(lRes.statusCode).toEqual(200)
+        done();
+      });
+    
     });
+    describe("unparticipate",done=>{
+      beforeAll(async (done) => {
+        
+        let lMMId1 = (await requestParticipate(lUserInfo.token)).body.matchmakingId;
+        let lMMId2 = (await requestParticipate(lUserInfo2.token)).body.matchmakingId;
+        done();
+  
+      })
 
-    test("participate twice existing user", async done => {
-      let lUserInfo = (await requestLogin(user1)).body;
-      let response = await requestParticipate(lUserInfo.token);
-      expect(response.statusCode).toBe(200);
-      const lMMId1 = response.body.matchmakingId;
-      let response1 = await requestParticipate(lUserInfo.token);
-      expect(response1.statusCode).toBe(200);
-      let lMMId2 = response1.body.matchmakingId;
-      expect(lMMId1).toEqual(lMMId2);
-      done();
-    });
-
-    test("participate other user", async done => {
-      let lUserInfo = (await requestLogin(user1)).body;
-      let lUserInfo2 = (await requestLogin(user2)).body;
-      let response = await requestParticipate(lUserInfo.token);
-      const lMMId1 = response.body.matchmakingId;
-      let response1 = await requestParticipate(lUserInfo2.token);
-      expect(response1.statusCode).toBe(200);
-      let lMMId2 = response1.body.matchmakingId;
-      expect(lMMId1).not.toEqual(lMMId2);
-      done();
-    });
+      
+    })
+  })
 
 
-    test("request other user", async done => {
-      let lUserInfo = (await requestLogin(user1)).body;
-      let lUserInfo2 = (await requestLogin(user2)).body;
-      let lMMId1 = (await requestParticipate(lUserInfo.token)).body.matchmakingId;
-      let lMMId2 = (await requestParticipate(lUserInfo2.token)).body.matchmakingId;
-      const lRes = (await requestSendRequest(lUserInfo.token,lMMId2)).body;
-      expect(lRes).toEqual({message:"Request sent"})
-      let lMMRequests2 = (await requestParticipate(lUserInfo2.token)).body.request;
-
-      expect(lMMRequests2).toHaveLength(1);
-      const lResbis = (await requestSendRequest(lUserInfo.token,lMMId2)).body;
-      expect(lResbis).toEqual({message:"Request sent"})
-      const lRester = (await requestSendRequest(lUserInfo.token,lMMId2)).body;
-      expect(lRester).toEqual({message:"Request sent"})
-      let lMMRequests2bis = (await requestParticipate(lUserInfo2.token)).body.request;
-      expect(lMMRequests2bis).toHaveLength(1);
-
-      done();
-    },time);
-  });
+ 
 
 });
