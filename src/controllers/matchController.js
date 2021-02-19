@@ -13,18 +13,18 @@ const {
 } = require('../services/matchService');
 
 async function getMatchData(req, res) {
-  if(!req.session.connectedUser || !req.session.connectedUser.id){
-    sendError(new StatusCodeError("Session is invalid",400),res);
+  if (!req.session.connectedUser || !req.session.connectedUser.id) {
+    sendError(new StatusCodeError("Session is invalid", 400), res);
     return;
   }
   const lPlayingPlayerId = req.session.connectedUser.id;
   const response = await getMatchDataService(lPlayingPlayerId);
-  sendResponse(response, res);
+  sendResponse(response, res, req);
 }
 
 async function getAllMatches(req, res) {
   const response = await getAllMatchesService(lPlayingPlayerId);
-  sendResponse(response, res);
+  sendResponse(response, res, req);
 }
 
 function extractDeck(pDeck) {
@@ -43,25 +43,27 @@ async function initDeck(req, res) {
   const [lDeck, error] = extractDeck(req.query.deck);
   if (error) {
     sendError(error, res);
+    return;
   }
   const lPlayingPlayerId = req.session.connectedUser.id;
   const response = await initDeckService(lPlayingPlayerId, lDeck);
-  sendResponse(response, res);
+  sendResponse(response, res, req);
 
 }
 async function pickCard(req, res) {
   const lPlayingPlayerId = req.session.connectedUser.id;
   const response = await pickCardService(lPlayingPlayerId);
-  sendResponse(response, res);
+  sendResponse(response, res, req);
 }
 async function playCard(req, res) {
   const lPlayingPlayerId = req.session.connectedUser.id;
   const pCard = req.query.card;
   if (!pCard) {
     sendError(new StatusCodeError('Card query parameter is missing', 400), res);
+    return;
   }
   const response = await playCardService(lPlayingPlayerId, pCard);
-  sendResponse(response, res);
+  sendResponse(response, res, req);
 }
 
 async function attackCard(req, res) {
@@ -77,7 +79,7 @@ async function attackCard(req, res) {
     }
 
     const response = await attackCardService(lPlayingPlayerId, pCard, pEnemyCard);
-    sendResponse(response, res);
+    sendResponse(response, res, req);
   } catch (e) {
     sendError(new StatusCodeError(e, 400), res);
   }
@@ -91,7 +93,7 @@ async function attackPlayer(req, res) {
       throw new Error('card query parameter is missing');
     }
     const response = await attackPlayerService(lPlayingPlayerId, pCard);
-    sendResponse(response, res);
+    sendResponse(response, res, req);
   } catch (e) {
     sendError(new StatusCodeError(e, 400), res);
   }
@@ -100,13 +102,13 @@ async function attackPlayer(req, res) {
 async function endTurn(req, res) {
   const lPlayingPlayerId = req.session.connectedUser.id;
   const response = await endTurnService(lPlayingPlayerId, pCard);
-  sendResponse(response, res);
+  sendResponse(response, res, req);
 }
 
 async function finishMatch(req, res) {
   const lPlayingPlayerId = req.session.connectedUser.id;
   const response = await finishMatchService(lPlayingPlayerId);
-  sendResponse(response, res);
+  sendResponse(response, res, req);
 }
 module.exports = {
   getMatchData,

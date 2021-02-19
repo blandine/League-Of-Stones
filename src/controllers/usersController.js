@@ -13,10 +13,11 @@ async function createUserAccount(req, res) {
   if (!password || !email || !name) {
     const error = new StatusCodeError('Missing parameters. Parameters are : name, email, password.')
     sendError(error, res)
+    return;
   }
 
   const response = await createAccount(email, password, name);
-  sendResponse(response, res);
+  sendResponse(response, res, req);
 }
 
 async function userLogin(req, res) {
@@ -29,7 +30,7 @@ async function userLogin(req, res) {
     if (result && !error) {
       req.session.connectedUser = result;
     }
-    sendResponse([result, error], res);
+    sendResponse([result, error], res, req);
   }
 }
 
@@ -37,23 +38,34 @@ async function userLogout(req, res) {
 
   const lUserId = req.session.connectedUser.id;
   const [result, error] = await logout(lUserId);
-  if (result) {
+  if (error) {
+    sendError(new StatusCodeError("Logout error " + error, 400))
+    return;
+  }
+  else {
+    const lToken = req.header('WWW-Authenticate');
     SingleStore.sessionStore.destroy(
-      req.session.connectedUser.token,//todo: check me
-      function (error, session) {
-       console.log("session destroyed")
+      lToken,
+      function (error) {
+        if (error) {
+          sendError(new StatusCodeError("Error while destroying session " + error, 400))
+        } else {
+          sendResponse([result, error], res, req);
+        }
       }
     )
   }
 
-  sendResponse([result, error], res);
+
+
+
 
 
 }
 
 async function getUsers(req, res) {
   const lResponse = await getAllUsers();
-  sendResponse(lResponse, res);
+  sendResponse(lResponse, res, req);
 }
 
 async function deleteUserAccount(req, res) {
@@ -71,11 +83,11 @@ async function deleteUserAccount(req, res) {
       SingleStore.sessionStore.destroy(
         req.session.connectedUser.token,//todo: check me
         function (error, session) {
-         console.log("session destroyed")
+          console.log("session destroyed")
         }
       )
     }
-    sendResponse([result, error], res);
+    sendResponse([result, error], res, req);
 
   }
   catch (err) {
@@ -91,7 +103,7 @@ function isUserConnected(req, res) {
       name: req.session.connectedUser.name,
     }
   }
-  sendResponse([lResponse, null], res);
+  sendResponse([lResponse, null], res, req);
 }
 
 module.exports = {

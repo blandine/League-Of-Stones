@@ -1,3 +1,5 @@
+const { SingleStore } = require("../utils/session");
+
 class StatusCodeError {
   message;
   code;
@@ -7,14 +9,21 @@ class StatusCodeError {
   }
 }
 
-function sendResponse([response, error], res) {
+function sendResponse([response, error], res, req) {
   if (error) {
     sendError(error, res);
   } else {
-    if(typeof response == 'string'){
-      response = {message:response};
+    if (typeof response == 'string') {
+      response = { message: response };
     }
-    res.json(response);
+    if (req.header('WWW-Authenticate')) {
+       SingleStore.sessionStore.set(
+        req.header('WWW-Authenticate'),
+        req.session
+      );
+    }
+      res.json(response);
+    
   }
 }
 

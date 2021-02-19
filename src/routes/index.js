@@ -15,7 +15,7 @@ const { sendResponse } = require('./utils');
 
 router.get('/', function (req, res, next) {
   const message = 'League of Stones server is up ! Welcome :) hahahahah ';
-  sendResponse([message, null], res);
+  sendResponse([message, null], res, req);
 });
 
 router.get('/resetServer', async function (req, res, next) {

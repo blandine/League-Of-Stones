@@ -1,8 +1,7 @@
 const createError = require('http-errors');
 
-const { SingleStore } = require('./utils/session.js');
 function requiresAuth(req, res, next) {
-    if (req.session && req.session.connectedUser !==null) {
+    if (req.session && req.session.connectedUser) {
         next();
     }
     else {

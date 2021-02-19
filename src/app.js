@@ -9,9 +9,9 @@ const { combine, colorize, printf } = format;
 const expressWinston = require('express-winston');
 
 const { SingleStore } = require('./utils/session.js');
-SingleStore.connect();
 var indexRouter = require('./routes/index.js');
 const app = express();
+SingleStore.connect();
 
 //Allowing CORS connection
 app.all('*', function (req, res, next) {
@@ -29,11 +29,11 @@ app.all('*', function (req, res, next) {
         req.session = session;
         next();
       }
-    )
-  }else{
-    next();
-  }
-});
+      )
+    }else{
+      next();
+    }
+  });
 
 app.use(
   expressSession({
