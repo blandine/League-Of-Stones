@@ -4,7 +4,7 @@ const { getCardsService } = require('../services/cardsService');
 async function getCards(req, res) {
     const lResponse= await getCardsService();
 
-    sendResponse(lResponse,res);
+    sendResponse(lResponse,res,req);
 }
 
 module.exports = { getCards }

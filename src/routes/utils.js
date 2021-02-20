@@ -37,11 +37,14 @@ function sendResponse([response, error], res, req, save = true) {
     if (typeof response == 'string') {
       response = { message: response };
     }
-    if (save) {
-      saveSession(req);
-    } else {
-      destroySession(req)
+    if (req) {
+      if (save) {
+        saveSession(req);
+      } else {
+        destroySession(req);
+      }
     }
+
     res.json(response);
   }
 }

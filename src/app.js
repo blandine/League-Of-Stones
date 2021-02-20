@@ -60,7 +60,15 @@ app.use(expressWinston.logger({
     printf(info => {
       const { meta, message } = info;
       const { req, res } = meta;
-      const lBody = res && res.body ? " : " + JSON.stringify(res.body) : "";
+      let lBody = "";
+      if(res && res.body){
+        lBody+= " : "
+        if(Array.isArray(res.body)){
+          lBody += `Array(${res.body.length})`
+        }else{
+          lBody += `${JSON.stringify(res.body)}`
+        }
+      }
       const lToken = req && req.headers['WWW-Authenticate'] ? ' token : ' + req.header['WWW-Authenticate'] : "";
       return `${message}${lToken}${lBody}`
     })
