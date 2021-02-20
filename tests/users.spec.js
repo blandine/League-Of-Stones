@@ -3,6 +3,7 @@ const request = require("supertest");
 const { MongoDBConnection } = require("../src/utils/database.js");
 const { deleteAccount, createAccount, login } = require("../src/services/usersService.js");
 const { SingleStore } = require("../src/utils/session.js");
+const { response } = require("express");
 const time=10000000;
 const user = {
   email: 'cat@cat.com',
@@ -34,6 +35,17 @@ async function requestLogout(pToken) {
 async function requestParticipate(pToken) {
   return request(app)
     .get("/matchmaking/participate")
+    .set('WWW-authenticate', pToken);
+}
+async function requestUnparticipate(pToken) {
+  return request(app)
+    .get("/matchmaking/unparticipate")
+    .set('WWW-authenticate', pToken);
+}
+
+async function requestGetAll(pToken) {
+  return request(app)
+    .get("/matchmaking/getAll")
     .set('WWW-authenticate', pToken);
 }
 async function requestSendRequest(pToken,pRequestedId) {
@@ -251,14 +263,14 @@ describe("Test the root path up", () => {
         const lMMId2 = response1.body.matchmakingId;
     
         const lRes = (await requestSendRequest(lUserInfo.token,lMMId2));
-        expect(lRes.body.message).toEqual("Your matchmakingId is undefined. Participate first")
+        expect(lRes.body.message).toEqual("Matchmaking is undefined. Participate to have one!")
         expect(lRes.statusCode).toEqual(400)
     
         done();
       });
     
       test("send request to disconected user", async done => {
-        let response1 = await requestParticipate(lUserInfo1.token);
+        let response1 = await requestParticipate(lUserInfo.token);
         const lMMId1 = response1.body.matchmakingId;
         let response2 = await requestParticipate(lUserInfo2.token);
         const lMMId2 = response2.body.matchmakingId;
@@ -268,22 +280,68 @@ describe("Test the root path up", () => {
         expect(lRes.statusCode).toEqual(200)
         done();
       });
+      describe("unparticipate",()=>{
+        let lMMId1;
+        let lMMId2;
+        beforeAll(async (done) => {
+          
+          lMMId1 = (await requestParticipate(lUserInfo.token)).body.matchmakingId;
+          lMMId2 = (await requestParticipate(lUserInfo2.token)).body.matchmakingId;
+          done();
     
-    });
-    describe("unparticipate",done=>{
-      beforeAll(async (done) => {
-        
-        let lMMId1 = (await requestParticipate(lUserInfo.token)).body.matchmakingId;
-        let lMMId2 = (await requestParticipate(lUserInfo2.token)).body.matchmakingId;
-        done();
+        })
+        test("unparticipate", async done => {
+          let response1 = await requestUnparticipate(lUserInfo.token);
+          expect(response1.statusCode).toEqual(200)
   
-      })
+          let response2 = await requestUnparticipate(lUserInfo.token);
+          expect(response2.statusCode).toEqual(400)
+          expect(response2.body.message).toBe("Matchmaking is undefined. Participate to have one!")
 
-      
-    })
+          let response3 = await requestParticipate(lUserInfo.token);
+          expect(response3.statusCode).toEqual(200)
+
+          let response3b = (await requestSendRequest(lUserInfo2.token,lMMId1));
+          expect(response3b.statusCode).toEqual(200)
+
+          let response4 = await requestUnparticipate(lUserInfo.token);
+          expect(response4.statusCode).toEqual(200)
+          let response4b = await requestAcceptRequest(lUserInfo.token);
+          expect(response4b.statusCode).toEqual(400)
+          expect(response4b.body.message).toBe("Matchmaking is undefined. Participate to have one!")
+
+          let response5 = (await requestSendRequest(lUserInfo.token,lMMId2));
+          expect(response5.statusCode).toEqual(400)
+          expect(response5.body.message).toBe("Matchmaking is undefined. Participate to have one!")
+          
+          done();
+        });
+        test("getall", async done => {
+          let response0 = await requestGetAll(lUserInfo.token);
+          expect(response0.statusCode).toEqual(200);
+          expect(response0.body).toHaveLength(1);
+          
+          let response1 = await requestUnparticipate(lUserInfo.token);
+          expect(response1.statusCode).toEqual(200)
+
+          response0 = await requestGetAll(lUserInfo.token);
+          expect(response0.statusCode).toEqual(200);
+          expect(response0.body).toHaveLength(1);
+
+          let response2 = await requestUnparticipate(lUserInfo2.token);
+          expect(response2.statusCode).toEqual(200)
+
+          response0 = await requestGetAll(lUserInfo.token);
+          expect(response0.statusCode).toEqual(200);
+          expect(response0.body).toHaveLength(0);
+          done();
+
+        },time);
+        
+      })
+    });
+
   })
 
-
- 
 
 });

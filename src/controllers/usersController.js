@@ -39,7 +39,7 @@ async function userLogout(req, res) {
   const lUserId = req.session.connectedUser.id;
   const [result, error] = await logout(lUserId);
   if (error) {
-    sendError(new StatusCodeError("Logout error " + error, 400))
+    sendError(new StatusCodeError("Logout error " + error, 400),res)
     return;
   }
   else {
@@ -48,7 +48,7 @@ async function userLogout(req, res) {
       lToken,
       function (error) {
         if (error) {
-          sendError(new StatusCodeError("Error while destroying session " + error, 400))
+          sendError(new StatusCodeError("Error while destroying session " + error, 400),res)
         } else {
           sendResponse([result, error], res, req);
         }

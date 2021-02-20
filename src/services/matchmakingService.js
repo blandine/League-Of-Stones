@@ -12,6 +12,9 @@ async function removeMatchmakingIdFromRequests(pMatchmakingId) {
     const lCollection = await MongoDBConnection.getMatchmakingsCollection();
     return lCollection.updateMany({}, { $pull: { request: { matchmakingId: pMatchmakingId } } }, { multi: true });
 }
+async function removeMatchmakingById(pMatchmakingId) {
+    const lCollection = await MongoDBConnection.getMatchmakingsCollection();
+    return lCollection.remove({ _id: new ObjectId(pMatchmakingId) });}
 
 async function addMatchmakingRequest(pMatchmakingId, pRequest) {
     const lCollection = await MongoDBConnection.getMatchmakingsCollection();
@@ -37,7 +40,7 @@ async function getAvailableMatchmakings(pCurrentPlayerId) {
                 'match': {
                     '$exists': false
                 },
-                'user._id': {
+                'user.id': {
                     '$ne': pCurrentPlayerId
                 }
             }
@@ -94,6 +97,7 @@ async function unparticipateService(pMatchmakingId) {
     }
 
     await removeMatchmakingIdFromRequests(pMatchmakingId);
+    await removeMatchmakingById(pMatchmakingId);
     return ["Unparticipated", null];
 }
 
