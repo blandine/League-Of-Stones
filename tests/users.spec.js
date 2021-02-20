@@ -161,6 +161,8 @@ describe("Test the root path up", () => {
 
   });
   describe("matchmaking",()=>{
+    let lUserInfo;
+    let lUserInfo2;
     beforeAll(async (done) => {
       // Connect to a Mongo DB
       await createAccount(user1.email, user1.password, user1.name);
@@ -172,23 +174,25 @@ describe("Test the root path up", () => {
 
     afterAll(async (done) => {
       // Connect to a Mongo DB
+        let logout = (await requestLogout(lUserInfo.token));
+        logout = (await requestLogout(lUserInfo2.token));
       done();
     })
     describe("Test the participate", () => {
 
   
       test("participate without loging", async done => {
-        let lUserInfo = (await requestLogin(user1)).body;
+        lUserInfo = (await requestLogin(user1)).body;
         let logout = (await requestLogout(lUserInfo.token));
   
         let response = await requestParticipate(lUserInfo.token);
         expect(response.statusCode).toBe(401);
         expect(response.body.message).toBe("User not connected.");
         done();
-      });
+      },time);
   
       test("participate existing user", async done => {
-        let lUserInfo = (await requestLogin(user1)).body;
+        lUserInfo = (await requestLogin(user1)).body;
         let response = await requestParticipate(lUserInfo.token);
         expect(response.statusCode).toBe(200);
         expect(typeof response.body.matchmakingId).toBe("string");
@@ -197,7 +201,7 @@ describe("Test the root path up", () => {
       });
   
       test("participate twice existing user", async done => {
-        let lUserInfo = (await requestLogin(user1)).body;
+        lUserInfo = (await requestLogin(user1)).body;
         let response = await requestParticipate(lUserInfo.token);
         expect(response.statusCode).toBe(200);
         const lMMId1 = response.body.matchmakingId;
@@ -209,8 +213,8 @@ describe("Test the root path up", () => {
       });
   
       test("participate other user", async done => {
-        let lUserInfo = (await requestLogin(user1)).body;
-        let lUserInfo2 = (await requestLogin(user2)).body;
+        lUserInfo = (await requestLogin(user1)).body;
+        lUserInfo2 = (await requestLogin(user2)).body;
         let response = await requestParticipate(lUserInfo.token);
         const lMMId1 = response.body.matchmakingId;
         let response1 = await requestParticipate(lUserInfo2.token);
@@ -222,8 +226,6 @@ describe("Test the root path up", () => {
   
     })
     describe("send request",()=>{
-      let lUserInfo;
-      let lUserInfo2;
       beforeAll(async (done) => {
         
         lUserInfo= (await requestLogin(user1)).body;
@@ -235,7 +237,7 @@ describe("Test the root path up", () => {
       afterAll(async (done) => {
         // Connect to a Mongo DB
         
-        const logoutRes = (await requestLogout(lUserInfo2.token));
+        const logoutRes = (await requestLogout(lUserInfo.token));
         const logoutRes2 = (await requestLogout(lUserInfo2.token));
         done();
       })
@@ -243,14 +245,16 @@ describe("Test the root path up", () => {
         let lMMId1 = (await requestParticipate(lUserInfo.token)).body.matchmakingId;
         let lMMId2 = (await requestParticipate(lUserInfo2.token)).body.matchmakingId;
         
-        const lRes = (await requestSendRequest(lUserInfo.token,lMMId2)).body;
-        expect(lRes).toEqual({message:"Request sent"})
+        const lRes = (await requestSendRequest(lUserInfo.token,lMMId2));
+        expect(lRes.statusCode).toEqual(200)
+
+        expect(lRes.body.message).toContain("sent")
         
         let lMMRequests2 = (await requestParticipate(lUserInfo2.token)).body.request;
         expect(lMMRequests2).toHaveLength(1);
   
         const lResbis = (await requestSendRequest(lUserInfo.token,lMMId2)).body;
-        expect(lResbis).toEqual({message:"Request sent"})
+        expect(lRes.statusCode).toEqual(200)
         
         let lMMRequests2bis = (await requestParticipate(lUserInfo2.token)).body.request;
         expect(lMMRequests2bis).toHaveLength(1);
@@ -262,6 +266,7 @@ describe("Test the root path up", () => {
         let response1 = await requestParticipate(lUserInfo2.token);
         const lMMId2 = response1.body.matchmakingId;
     
+        let response2 = await requestUnparticipate(lUserInfo.token);
         const lRes = (await requestSendRequest(lUserInfo.token,lMMId2));
         expect(lRes.body.message).toEqual("Matchmaking is undefined. Participate to have one!")
         expect(lRes.statusCode).toEqual(400)
@@ -276,7 +281,7 @@ describe("Test the root path up", () => {
         const lMMId2 = response2.body.matchmakingId;
     
          const logoutRes = (await requestLogout(lUserInfo2.token));
-        const lRes = (await requestSendRequest(lUserInfo1.token,lMMId2));
+        const lRes = (await requestSendRequest(lUserInfo.token,lMMId2));
         expect(lRes.statusCode).toEqual(200)
         done();
       });
@@ -284,6 +289,13 @@ describe("Test the root path up", () => {
         let lMMId1;
         let lMMId2;
         beforeAll(async (done) => {
+        
+          lUserInfo= (await requestLogin(user1)).body;
+          lUserInfo2 = (await requestLogin(user2)).body;
+          done();
+    
+        })
+        beforeEach(async (done) => {
           
           lMMId1 = (await requestParticipate(lUserInfo.token)).body.matchmakingId;
           lMMId2 = (await requestParticipate(lUserInfo2.token)).body.matchmakingId;

@@ -8,22 +8,41 @@ class StatusCodeError {
     this.code = code ? code : 400;
   }
 }
+function saveSession(req) {
+  const token = req.header('WWW-Authenticate');
+  if (token) {
+    SingleStore.sessionStore.set(
+      token,
+      req.session
+    );
+  }
+}
+function destroySession(req) {
+  const token = req.header('WWW-Authenticate');
+  if (token) {
+    SingleStore.sessionStore.destroy(
+      token,
+      function (_error) {
+        console.log("session destroyed")
+      }
+    )
+  }
+}
 
-function sendResponse([response, error], res, req) {
+
+function sendResponse([response, error], res, req, save = true) {
   if (error) {
     sendError(error, res);
   } else {
     if (typeof response == 'string') {
       response = { message: response };
     }
-    if (req.header('WWW-Authenticate')) {
-       SingleStore.sessionStore.set(
-        req.header('WWW-Authenticate'),
-        req.session
-      );
+    if (save) {
+      saveSession(req);
+    } else {
+      destroySession(req)
     }
-      res.json(response);
-    
+    res.json(response);
   }
 }
 

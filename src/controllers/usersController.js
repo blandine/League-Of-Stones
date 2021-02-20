@@ -50,7 +50,7 @@ async function userLogout(req, res) {
         if (error) {
           sendError(new StatusCodeError("Error while destroying session " + error, 400),res)
         } else {
-          sendResponse([result, error], res, req);
+          sendResponse([result, error], res, req, false); // undefined mean: we don't save the session
         }
       }
     )
@@ -79,15 +79,7 @@ async function deleteUserAccount(req, res) {
       throw new StatusCodeError('User has been disconnected.', 500)
     }
     const [result, error] = await deleteAccount(lEmail, lPassword);
-    if (result) {
-      SingleStore.sessionStore.destroy(
-        req.session.connectedUser.token,//todo: check me
-        function (error, session) {
-          console.log("session destroyed")
-        }
-      )
-    }
-    sendResponse([result, error], res, req);
+    sendResponse([result, error], res, req, false);
 
   }
   catch (err) {

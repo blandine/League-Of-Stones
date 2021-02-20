@@ -93,7 +93,7 @@ async function deleteAccount(pEmail, pPassword) {
 async function clearUserPresence(pUserId){
     const lMatchmakingCollection = await MongoDBConnection.getMatchmakingsCollection();
     const lMatchCollection = await MongoDBConnection.getMatchCollection();
-    await lMatchmakingCollection.deleteMany({ 'user._id': pUserId });
+    await lMatchmakingCollection.deleteMany({ 'user.id': pUserId });
     await lMatchmakingCollection.deleteMany({ 'match.player1.id': pUserId });
     await lMatchmakingCollection.deleteMany({ 'match.player2.id': pUserId });
     await lMatchCollection.deleteMany({ 'player1.id': pUserId });
