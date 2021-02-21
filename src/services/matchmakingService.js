@@ -5,7 +5,7 @@ const ObjectId = require('mongodb').ObjectID;
 
 async function getMatchmakingById(pMatchmakingId) {
     const lCollection = await MongoDBConnection.getMatchmakingsCollection();
-    return lCollection.find({ _id: new ObjectId(pMatchmakingId) });
+    return lCollection.findOne({ _id: new ObjectId(pMatchmakingId) });
 }
 
 async function removeMatchmakingIdFromRequests(pMatchmakingId) {
@@ -14,14 +14,15 @@ async function removeMatchmakingIdFromRequests(pMatchmakingId) {
 }
 async function removeMatchmakingById(pMatchmakingId) {
     const lCollection = await MongoDBConnection.getMatchmakingsCollection();
-    return lCollection.remove({ _id: new ObjectId(pMatchmakingId) });}
+    return lCollection.remove({ _id: new ObjectId(pMatchmakingId) });
+}
 
 async function addMatchmakingRequest(pMatchmakingId, pRequest) {
     const lCollection = await MongoDBConnection.getMatchmakingsCollection();
     return lCollection
         .updateOne(
             { _id: new ObjectId(pMatchmakingId) },
-            { $addToSet: { request: {$each:[pRequest]} } }
+            { $addToSet: { request: { $each: [pRequest] } } }
         )
 }
 async function isMatchmakingIdRequestable(pMatchmakingId, pRequestedMatchmakingId) {
@@ -29,7 +30,12 @@ async function isMatchmakingIdRequestable(pMatchmakingId, pRequestedMatchmakingI
 
     return lCollection.findOne({
         _id: new ObjectId(pMatchmakingId),
-        request: { $elemMatch: { matchmakingId: pRequestedMatchmakingId } }
+        request: {
+            $elemMatch: {
+                matchmakingId:
+                    pRequestedMatchmakingId
+            }
+        }
     });
 }
 async function getAvailableMatchmakings(pCurrentPlayerId) {
@@ -81,7 +87,7 @@ async function participateService(pUser) {
             request: []
         }
     }
-    if(lResult.matchmakingId == undefined){
+    if (lResult.matchmakingId == undefined) {
         throw new Error("undefined matchmaking")
     }
     return [lResult, null];
@@ -106,19 +112,19 @@ async function getAllAvailableMatchmakingsService(pPlayerId) {
     return [lMatchmakings, null];
 }
 
-async function sendRequestService(pMatchmakingId, pPlayerId, pPlayerName) {
-    const lMatchmakingDocument = await getMatchmakingById(pMatchmakingId);
+async function sendRequestService(pRequestedMatchmakingId, pPlayerId, pPlayerName, pPlayerMatchmakingId) {
+    const lMatchmakingDocument = await getMatchmakingById(pRequestedMatchmakingId);
 
     if (!lMatchmakingDocument) {
         return [null, new StatusCodeError("MatchmakingId does not exist", 404)]
     }
     const lRequest = {
         userId: pPlayerId,
-        matchmakingId: pMatchmakingId,
+        matchmakingId: pPlayerMatchmakingId,
         name: pPlayerName
     }
-    const lRes=await addMatchmakingRequest(pMatchmakingId, lRequest)
-    if(lRes.result.nModified){
+    const lRes = await addMatchmakingRequest(pRequestedMatchmakingId, lRequest)
+    if (lRes.result.nModified) {
         return ["Request already sent", null];
     }
     return ["Request sent", null];
@@ -150,38 +156,37 @@ async function createNewMatch(pMatchmakingId, pRequestedMatchmakingId, pPlayerId
     await removeMatchByPlayerId(pRequestedPlayerId);
     const lMatch = {
         player1: {
-          name: pRequestedPlayerId,
-          id: pRequestedPlayerName
+            id: pRequestedPlayerId,
+            name: pRequestedPlayerName
         },
         player2: {
-          name: pPlayerId,
-          id: pPlayerName
+            id: pPlayerId,
+            name: pPlayerName
         }
-      };
+    };
     const lCollection = await MongoDBConnection.getMatchCollection();
-    let lResult= await lCollection.insertOne(lMatch);
-    if(!lResult){
+    let lResult = await lCollection.insertOne(lMatch);
+    if (!lResult) {
         return [null, new StatusCodeError("Error on match creation", 400)];
     }
 
     await updateMatchmakingById(pMatchmakingId, lMatch);
     await updateMatchmakingById(pRequestedMatchmakingId, lMatch);
-    return [lMatch,null];
-    
+    return [lMatch, null];
+
 }
 
-async function acceptRequestService(pMatchmakingId, pRequestedMatchmakingId, pPlayerId) {
+async function acceptRequestService(pMatchmakingId, pRequestedMatchmakingId, pPlayerId, pPlayerName) {
     const lMatchmakingRequester = await isMatchmakingIdRequestable(pMatchmakingId, pRequestedMatchmakingId);
     if (!lMatchmakingRequester) {
         return [null, new StatusCodeError("Requested matchmakingId does not exist", 404)]
     }
-    const lRequestedMatchmakingId = getMatchmakingById(pRequestedMatchmakingId);
-    if (!lRequestedMatchmakingId.match) {
+    const lRequestedMatchmakingId = await getMatchmakingById(pRequestedMatchmakingId);
+    if (lRequestedMatchmakingId.match) {
         return [null, new StatusCodeError("Already in match (too late)", 400)];
     }
-    
-    return createNewMatch(pMatchmakingId, pRequestedMatchmakingId, pPlayerId,pPlayerName,lRequestedMatchmakingId.user._id,lRequestedMatchmakingId.user.name)
 
+    return createNewMatch(pMatchmakingId, pRequestedMatchmakingId, pPlayerId, pPlayerName, lRequestedMatchmakingId.user.id, lRequestedMatchmakingId.user.name)
 }
 module.exports = {
     participateService,

@@ -12,12 +12,12 @@ async function participate(req, res) {
   const lUser = req.session.connectedUser;
   const lEmail = lUser.email;
   if (!lEmail) {
-    sendError(new StatusCodeError('Session is missing email', 400),res);
+    sendError(new StatusCodeError('Session is missing email', 400), res);
     return;
   }
   const [result, error] = await participateService(lUser);
   if (error) {
-    sendError(new StatusCodeError(error, 400),res)
+    sendError(new StatusCodeError(error, 400), res)
     return;
   }
   req.session.matchmakingId = result.matchmakingId;
@@ -41,27 +41,29 @@ async function getAllMatchmakings(req, res) {
 async function sendRequest(req, res) {
   const lPlayingPlayerId = req.session.connectedUser.id;
   const lPlayingPlayerName = req.session.connectedUser.name;
-  const lMatchmakingId = req.query.matchmakingId;
-  if (!lMatchmakingId || lMatchmakingId.length == 0) {
+  const lRequestedMatchmakingId = req.query.matchmakingId;
+  if (!lRequestedMatchmakingId || lRequestedMatchmakingId.length == 0) {
     sendError(new StatusCodeError("Query parameter matchmakingId is not valid", 400), res)
     return;
   }
-  if (req.session.matchmakingId == lMatchmakingId) {
+  const lPlayerMatchmakingId = req.session.matchmakingId;
+  if (lPlayerMatchmakingId == lRequestedMatchmakingId) {
     sendError(new StatusCodeError("You can't send a request to your own matchmakingid", 400), res)
     return;
   }
-  const response = await sendRequestService(lMatchmakingId, lPlayingPlayerId, lPlayingPlayerName);
+  const response = await sendRequestService(lRequestedMatchmakingId, lPlayingPlayerId, lPlayingPlayerName, lPlayerMatchmakingId);
   sendResponse(response, res, req);
 }
 async function acceptRequest(req, res) {
   const lPlayingPlayerId = req.session.connectedUser.id;
+  const lPlayingPlayerName = req.session.connectedUser.name;
   const lMatchmakingId = req.session.matchmakingId;
   const lRequestedMatchmakingId = req.query.matchmakingId;
   if (!lRequestedMatchmakingId || lRequestedMatchmakingId.length == 0) {
     sendError(new StatusCodeError("Query parameter matchmakingId is not valid", 400), res)
     return;
   }
-  const response = await acceptRequestService(lMatchmakingId, lRequestedMatchmakingId, lPlayingPlayerId);
+  const response = await acceptRequestService(lMatchmakingId, lRequestedMatchmakingId, lPlayingPlayerId, lPlayingPlayerName);
   sendResponse(response, res, req);
 }
 module.exports = {
