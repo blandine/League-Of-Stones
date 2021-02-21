@@ -1,11 +1,12 @@
 const { SingleStore } = require("../utils/session");
 
-class StatusCodeError {
+class StatusCodeError extends Error {
   message;
-  code;
-  constructor(message, code) {
-    this.message = message;
-    this.code = code ? code : 400;
+  status;
+  constructor(message, status) {
+    super();
+    this.message=message;
+    this.code = status ? status : 400;
   }
 }
 function saveSession(req) {
@@ -22,29 +23,30 @@ function destroySession(req) {
   if (token) {
     SingleStore.sessionStore.destroy(
       token,
-      function (_error) {
-        console.log("session destroyed")
+      function (error) {
+        if(error){
+          throw new Error('Error while destroying session '+e)
+        }
       }
     )
   }
 }
 
 
-function sendResponse([response, error], res, req, save = true) {
+function sendResponse([response, error], res, req) {
   if (error) {
-    sendError(error, res);
+    return sendError(error, res);
   } else {
     if (typeof response == 'string') {
       response = { message: response };
     }
-    if (req) {
-      if (save) {
-        saveSession(req);
-      } else {
+    if (req && req.session.connectedUser) {
+      if (req.destroy == true) {
         destroySession(req);
+      } else {
+        saveSession(req)
       }
     }
-
     res.json(response);
   }
 }

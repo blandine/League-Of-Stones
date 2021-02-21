@@ -84,7 +84,7 @@ async function deleteAccount(pEmail, pPassword) {
             return [null, 'Error during user deletion'];
         }
         await clearUserPresence(lUserResult._id)
-        return [lUserIsRemoved, null];
+        return ["User account deleted (and disconnected)", null];
     } catch (error) {
         return [null, `Error during removing a user : ${error}`];
     }

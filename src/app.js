@@ -96,7 +96,14 @@ app.use(function (err, req, res, next) {
   res.locals.error = req.app.get('env') === 'development' ? err : {};
   // render the error page
   res.status(err.status || 500);
-  res.send(err);
+  const response= {
+    status: err.status,
+    message: err.message
+  }
+  if(res.statusCode == 500){
+    response.stack = err.stack
+  }
+  res.send(response);
 });
 
 

@@ -10,7 +10,11 @@ const user = {
   name: 'Cat',
   password: "C4t"
 }
-
+const userbis = {
+  email: 'cat2@cat.com',
+  name: 'Cat2',
+  password: "C4t2"
+}
 const user1 = {
   email: 'foxy@cat.com',
   name: 'Foxy',
@@ -60,6 +64,17 @@ async function requestAcceptRequest(pToken, pRequestedId) {
     .get("/matchmaking/acceptRequest?matchmakingId=" + pRequestedId)
     .set('WWW-authenticate', pToken);
 }
+async function requestCreateUser(pUser) {
+  return request(app)
+  .put("/user")
+  .send({ name: user.name, email: user.email, password: user.password })
+}
+async function requestDeleteUser(pUser,pToken) {
+  return request(app)
+  .get(`/users/unsubscribe?email=${pUser.email}&password=${pUser.password}`)
+  .set('WWW-authenticate', pToken);
+}
+
 describe("Test the root path up", () => {
   beforeAll(async (done) => {
     // Connect to a Mongo DB
@@ -101,9 +116,16 @@ describe("Test the root path up", () => {
   });
 
   describe("Test the insertion of an already existing user", () => {
+    beforeAll(async (done) => {
+      // Connect to a Mongo DB
+      await createAccount(userbis.email, userbis.password,userbis.name);
+      done();
+
+    })
     afterAll(async (done) => {
       // Connect to a Mongo DB
       await deleteAccount(user.email, user.password);
+      await deleteAccount(userbis.email, userbis.password);
       done();
 
     })
@@ -119,12 +141,38 @@ describe("Test the root path up", () => {
     test("It should not create a new user", async done => {
       let response = await request(app)
         .put("/user")
-        .send({ name: user.name, email: user.email, password: user.password })
+        .send({ name: userbis.name, email: userbis.email, password: userbis.password })
       expect(response.statusCode).toBe(409);
       expect(response.body.message).toBe("User already exists");
       done();
 
     });
+  });
+
+  describe("Test the deletion a user", () => {
+    beforeAll(async (done) => {
+      // Connect to a Mongo DB
+      await createAccount(user.email, user.password,user.name);
+      done();
+
+    })
+    
+    test("Delete unlogged user", async done => {
+      let response =await requestDeleteUser(user,'unvalidtoken');
+      expect(response.statusCode).toBe(401);
+      done();
+    })
+    test("It should delete a new user", async done => {
+      let lislogged=await requestLogin(user);
+      expect(lislogged.statusCode).toBe(200);
+      let response =await requestDeleteUser(user,lislogged.body.token);
+      expect(response.statusCode).toBe(200);
+      let response2 =await requestDeleteUser(user,lislogged.body.token);
+      expect(response2.statusCode).toBe(401);
+      expect(response2.body.message).toBe("User not connected.");
+      done();
+    });
+
   });
 
   describe("Test the connexion", () => {

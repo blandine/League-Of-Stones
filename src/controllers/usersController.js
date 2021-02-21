@@ -50,6 +50,7 @@ async function userLogout(req, res) {
         if (error) {
           sendError(new StatusCodeError("Error while destroying session " + error, 400),res)
         } else {
+          req.destroy = true;
           sendResponse([result, error], res, req, false); // undefined mean: we don't save the session
         }
       }
@@ -79,6 +80,7 @@ async function deleteUserAccount(req, res) {
       throw new StatusCodeError('User has been disconnected.', 500)
     }
     const [result, error] = await deleteAccount(lEmail, lPassword);
+    req.destroy = true;
     sendResponse([result, error], res, req, false);
 
   }
