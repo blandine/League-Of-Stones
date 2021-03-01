@@ -71,6 +71,26 @@ async function createMatchmaking(pUser) {
         request: []
     });
 }
+
+async function updateMatchmakingById(pMatchmakingId, pMatch) {
+    const lCollection = await MongoDBConnection.getMatchmakingsCollection();
+    if (pMatch !== undefined) {
+        return lCollection.updateOne(
+            { _id: new ObjectId(pMatchmakingId) },
+            { $set: { request: [], match: pMatch } }
+        );
+    } else {
+        return lCollection.updateOne(
+            { _id: new ObjectId(pMatchmakingId) },
+            { $set: { request: [] } },
+            { $unset: { match: "" } }
+
+        );
+    }
+
+}
+
+
 async function participateService(pUser) {
     let lResult;
     const lMatchmakingDocument = await getUserMatchmaking(pUser.email);
@@ -141,14 +161,7 @@ async function removeMatchByPlayerId(pPlayerId) {
     });
 }
 
-async function updateMatchmakingById(pMatchmakingId, pMatch) {
-    const lCollection = await MongoDBConnection.getMatchmakingsCollection();
 
-    lCollection.updateOne(
-        { _id: new ObjectId(pMatchmakingId) },
-        { $set: { request: [], match: pMatch } }
-    );
-}
 async function createNewMatch(pMatchmakingId, pRequestedMatchmakingId, pPlayerId, pPlayerName, pRequestedPlayerId, pRequestedPlayerName) {
 
     //Remove existing match (the new one will replace the previous ones)
@@ -176,6 +189,13 @@ async function createNewMatch(pMatchmakingId, pRequestedMatchmakingId, pPlayerId
 
 }
 
+async function quitMatch(pPlayerId, pRequestedPlayerId) {
+    await removeMatchByPlayerId(pPlayerId);
+    await removeMatchByPlayerId(pRequestedPlayerId);
+    await updateMatchmakingById(pMatchmakingId);
+    await updateMatchmakingById(pRequestedMatchmakingId, lMatch);
+}
+
 async function acceptRequestService(pMatchmakingId, pRequestedMatchmakingId, pPlayerId, pPlayerName) {
     const lMatchmakingRequester = await isMatchmakingIdRequestable(pMatchmakingId, pRequestedMatchmakingId);
     if (!lMatchmakingRequester) {
@@ -188,6 +208,7 @@ async function acceptRequestService(pMatchmakingId, pRequestedMatchmakingId, pPl
 
     return createNewMatch(pMatchmakingId, pRequestedMatchmakingId, pPlayerId, pPlayerName, lRequestedMatchmakingId.user.id, lRequestedMatchmakingId.user.name)
 }
+
 module.exports = {
     participateService,
     unparticipateService,

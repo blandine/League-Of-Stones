@@ -334,7 +334,7 @@ describe("Test the root path up", () => {
         done();
       });
 
-      test("send request to disconected user", async done => {
+      test("send request to disconnected user", async done => {
         let response1 = await requestParticipate(lUserInfo.token);
         const lMMId1 = response1.body.matchmakingId;
         let response2 = await requestParticipate(lUserInfo2.token);
@@ -344,7 +344,7 @@ describe("Test the root path up", () => {
         expect(logoutRes.statusCode).toEqual(200)
 
         const lRes = (await requestSendRequest(lUserInfo.token, lMMId2));
-        expect(lRes.statusCode).toEqual(200)
+        expect(lRes.statusCode).toEqual(404);
         done();
       });
    
@@ -383,7 +383,7 @@ describe("Test the root path up", () => {
         expect(response3.statusCode).toEqual(200)
 
         let response3b = (await requestSendRequest(lUserInfo2.token, lMMId1));
-        expect(response3b.statusCode).toEqual(200)
+        expect(response3b.statusCode).toEqual(404)
 
         let response4 = await requestUnparticipate(lUserInfo.token);
         expect(response4.statusCode).toEqual(200)
@@ -429,12 +429,7 @@ describe("Test the root path up", () => {
       }, time);
     })
     
-    describe("accept request",()=>{
-      beforeAll(async done=>{
-        
-      })
-      
-    })
+
   })
 
 
