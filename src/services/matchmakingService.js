@@ -14,7 +14,7 @@ async function removeMatchmakingIdFromRequests(pMatchmakingId) {
 }
 async function removeMatchmakingById(pMatchmakingId) {
     const lCollection = await MongoDBConnection.getMatchmakingsCollection();
-    return lCollection.remove({ _id: new ObjectId(pMatchmakingId) });
+    return lCollection.deleteOne({ _id: new ObjectId(pMatchmakingId) });
 }
 
 async function addMatchmakingRequest(pMatchmakingId, pRequest) {
@@ -203,7 +203,7 @@ async function acceptRequestService(pMatchmakingId, pRequestedMatchmakingId, pPl
     }
     const lRequestedMatchmakingId = await getMatchmakingById(pRequestedMatchmakingId);
     if (lRequestedMatchmakingId.match) {
-        return [null, new StatusCodeError("Already in match (too late)", 400)];
+        return [null, new StatusCodeError("Already in match (too late)", 409)];
     }
 
     return createNewMatch(pMatchmakingId, pRequestedMatchmakingId, pPlayerId, pPlayerName, lRequestedMatchmakingId.user.id, lRequestedMatchmakingId.user.name)

@@ -7,7 +7,7 @@ const {
     requestSendRequest,
     requestUnparticipate,
     requestLogin,
-    
+
     mocks
 } = require("./common.js");
 const { setupDb, time } = require("./main");
@@ -217,6 +217,8 @@ describe("matchmaking", () => {
             expect(response0.statusCode).toEqual(200);
             let response1 = await requestAcceptRequest(lUserInfo2.token, lMMId1);
             expect(response1.statusCode).toEqual(200);
+            let response2 = await requestAcceptRequest(lUserInfo2.token, lMMId1);
+            expect(response2.statusCode).toEqual(404);
             done();
 
         }, time);

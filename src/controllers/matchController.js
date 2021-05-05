@@ -29,7 +29,7 @@ async function getAllMatches(req, res) {
 
 function extractDeck(pDeck) {
   try {
-    const lDeck = JSON.parse(req.query.deck);
+    const lDeck = JSON.parse(pDeck);
     if (!lDeck instanceof Array) {
       throw new Error('should be an array');
     }

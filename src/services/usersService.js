@@ -24,7 +24,7 @@ async function createAccount(pEmail, pPassword, pUsername) {
     }
 }
 
-async function userExists(pEmail, pPassword){
+async function userExists(pEmail, pPassword) {
     try {
         const lCollection = await MongoDBConnection.getUsersCollection();
         let lUserResult = await lCollection.findOne({ email: pEmail })
@@ -79,7 +79,7 @@ async function deleteAccount(pEmail, pPassword) {
             return [null, lError];
         }
         const lCollection = await MongoDBConnection.getUsersCollection();
-        const lUserIsRemoved = await lCollection.deleteOne({ _id:lUserResult._id})
+        const lUserIsRemoved = await lCollection.deleteOne({ _id: lUserResult._id })
         if (!lUserIsRemoved) {
             return [null, 'Error during user deletion'];
         }
@@ -90,14 +90,21 @@ async function deleteAccount(pEmail, pPassword) {
     }
 }
 
-async function clearUserPresence(pUserId){
+async function clearUserPresence(pUserId) {
     const lMatchmakingCollection = await MongoDBConnection.getMatchmakingsCollection();
     const lMatchCollection = await MongoDBConnection.getMatchCollection();
-    await lMatchmakingCollection.deleteMany({ 'user.id': pUserId });
-    await lMatchmakingCollection.deleteMany({ 'match.player1.id': pUserId });
-    await lMatchmakingCollection.deleteMany({ 'match.player2.id': pUserId });
-    await lMatchCollection.deleteMany({ 'player1.id': pUserId });
-    await lMatchCollection.deleteMany({ 'player2.id': pUserId });
+
+    const byUserId = lMatchmakingCollection.deleteMany({ 'user.id': pUserId });
+    const byMatchPlayer1Id = lMatchmakingCollection.deleteMany({ 'match.player1.id': pUserId });
+    const byMatchPlayer2Id = lMatchmakingCollection.deleteMany({ 'match.player2.id': pUserId });
+    const byPlayer1Id = lMatchCollection.deleteMany({ 'player1.id': pUserId });
+    const byPlayer2Id = lMatchCollection.deleteMany({ 'player2.id': pUserId });
+
+    const lPromises = [byUserId, byMatchPlayer1Id, byMatchPlayer2Id, byPlayer1Id, byPlayer2Id];
+    const lResults = await Promise.all(lPromises)
+    const lNbDelete = lResults.reduce((acc, curr) => acc + curr.deletedCount, 0)
+
+    return [`Cleared (${lNbDelete} elements)`, null]
 }
 
 async function getAllUsers() {
