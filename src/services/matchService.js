@@ -119,9 +119,8 @@ async function getMatchDataService(pPlayingPlayerId) {
             return [null, new StatusCodeError('There is no match associated', 404)];
         }
 
-        const lStatus = lMatchDocument.status;
-        if (!lStatus) {
-            lStatus = MATCH_STATUS.DeckIsPending;
+        if (!lMatchDocument.status) {
+            const lStatus = MATCH_STATUS.DeckIsPending;
             try {
                 await updateMatchStatus(lMatchDocument._id, lStatus);
                 return [lStatus, null];
@@ -180,15 +179,19 @@ async function getCardsInfo(pDeck) {
         key: 1,
         name: 1,
         title: 1,
-    });
+    }).toArray();
+}
+
+function shuffle(a) {
+    for (let i = a.length; i; i--) {
+        let j = Math.floor(Math.random() * i);
+        [a[i - 1], a[j]] = [a[j], a[i - 1]];
+    }
 }
 
 async function all_defined(deck) {
-    if (!deck || !deck.length || deck.length < 20) {
-        return null;
-    }
     const lCards = await getCardsInfo(deck);
-    if (lCards && lCards.length == 20) {
+    if (lCards && lCards.length === 20) {
         shuffle(lCards);
         return lCards;
     }
@@ -196,15 +199,15 @@ async function all_defined(deck) {
 }
 
 async function initDeckService(pPlayingPlayerId, pDeck) {
-    if (!deck || !deck.length || deck.length < 20) {
-        [null, `Deck initialisation requires 20 cards`];
+    if (!pDeck || !pDeck.length || pDeck.length !== 20) {
+        return [null, `Deck initialisation requires 20 cards`];
     }
     if (!all_different(pDeck)) {
-        [null, `There is twice the same card in your deck`];
+        return [null, `There is twice the same card in your deck`];
     }
-    let lCards = all_defined(pDeck);
+    const lCards = await all_defined(pDeck);
     if (!lCards) {
-        [null, `Unknown card definitions found in deck.`];
+        return [null, `Unknown card definitions found in deck.`];
     }
     try {
         const lMatchDocument = await getCurrentMatch(pPlayingPlayerId);
@@ -212,16 +215,16 @@ async function initDeckService(pPlayingPlayerId, pDeck) {
             return [null, new StatusCodeError('There is no match associated', 404)];
         }
         if (lMatchDocument.status !== MATCH_STATUS.DeckIsPending) {
-            [null, `The match status is not pending a deck`];
+            return [null, `The match status is not pending a deck`];
         }
         const lPlayer = getConnectedPlayer(pPlayingPlayerId, lMatchDocument);
         const lMatchPlayer = lMatchDocument[lPlayer];
         if (getDeckLength(lMatchPlayer)) {
-            [null, `A deck is already defined`];
+            return [null, `A deck is already defined`];
         }
 
         await updatePlayerDeck(lMatchDocument._id, lPlayer, lCards);
-        return [{ ...lPlayer, deck: lCards }, null];
+        return [{ player:lPlayer, deck: "initialized" }, null];
     } catch (e) {
         return [null, `Get all matches error : ${e}`];
     }
