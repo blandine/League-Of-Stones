@@ -1,4 +1,5 @@
 const { createAccount } = require("../src/services/usersService.js");
+const { mocks, setupDb, time } = require("./common.js");
 const {
     requestAcceptRequest,
     requestGetAll,
@@ -7,10 +8,7 @@ const {
     requestSendRequest,
     requestUnparticipate,
     requestLogin,
-
-    mocks
-} = require("./common.js");
-const { setupDb, time } = require("./main");
+} = require("./requests.js");
 
 setupDb();
 
