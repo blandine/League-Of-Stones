@@ -16,13 +16,13 @@ const WHO = {
 };
 
 async function getCurrentMatch(pPlayingPlayerId) {
-    const lCollection = await MongoDBConnection.getMatchCollection();
-    return lCollection.findOne({
-        $or: [
-            { 'player1.id': pPlayingPlayerId },
-            { 'player2.id': pPlayingPlayerId },
-        ],
-    });
+        const lCollection = await MongoDBConnection.getMatchCollection();
+        return lCollection.findOne({
+            $or: [
+                { 'player1.id': pPlayingPlayerId },
+                { 'player2.id': pPlayingPlayerId },
+            ],
+        });
 }
 
 async function removeMatch(pMatchId) {
@@ -36,17 +36,20 @@ async function removeMatchmaking(pMatchId) {
 function getConnectedPlayer(pPlayingPlayerId, pMatch) {
     return pPlayingPlayerId == pMatch[PLAYER1].id ? PLAYER1 : PLAYER2;
 }
+function hasDeck(pMatchPlayer) {
+    return pMatchPlayer.deck?.length > 0
+}
 function getDeckLength(pMatchPlayer) {
-    return pMatchPlayer.deck ? pMatchPlayer.deck.length : 0;
+    return pMatchPlayer.deck?.length ?? 0;
 }
 function getHandLength(pMatchPlayer) {
-    return pMatchPlayer.hand ? pMatchPlayer.hand.length : 0;
+    return pMatchPlayer.hand?.length ?? 0;
 }
-function isMatchInitialized(pMatchDocument) {
+function matchNeedsInit(pMatchDocument) {
     return (
-        pMatchDocument.player1.board === undefined &&
-        getDeckLength(pMatchDocument[PLAYER1]) &&
-        getDeckLength(pMatchDocument[PLAYER2])
+        pMatchDocument[PLAYER1].board === undefined &&
+        hasDeck(pMatchDocument[PLAYER1]) &&
+        hasDeck(pMatchDocument[PLAYER2])
     );
 }
 
@@ -94,7 +97,11 @@ function getMatchResponse(pPlayingPlayerId, pMatch) {
 
 async function updateMatch(pMatchId, pNewMatch) {
     const lCollection = await MongoDBConnection.getMatchCollection();
-    return lCollection.updateOne({ _id: new ObjectId(pMatchId) }, pNewMatch);
+    delete pNewMatch._id
+    return lCollection.replaceOne(
+        { _id: new ObjectId(pMatchId) }, 
+        pNewMatch
+        );
 }
 
 async function updatePlayerDeck(pMatchId, pPlayer, pDeck) {
@@ -131,16 +138,14 @@ async function getMatchDataService(pPlayingPlayerId) {
                 ];
             }
         }
-
-        let lCurrentMatch;
-        if (isMatchInitialized(lMatchDocument)) {
-            lCurrentMatch = lMatchDocument;
-        } else {
-            lCurrentMatch = getMatchInit(lMatchDocument);
-            await updateMatch(lMatchDocument._id, lCurrentMatch);
+        let lMatchInit = lMatchDocument
+        if (matchNeedsInit(lMatchDocument)) {
+            lMatchInit = getMatchInit(lMatchDocument);
+            await updateMatch(lMatchDocument._id, lMatchInit);
+                
         }
-
-        const lResponse = getMatchResponse(pPlayingPlayerId, lCurrentMatch);
+        
+        const lResponse = getMatchResponse(pPlayingPlayerId, lMatchInit);
         return [lResponse, null];
     } catch (e) {
         return [null, `Get match data error : ${e}`];

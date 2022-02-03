@@ -7,7 +7,7 @@ const {
   requestAcceptRequest,
   requestCards,
   requestInitDeck,
-  requestGetMatchInfo
+  requestGetMatchInfo,
 } = require('./requests');
 setupDb();
 
@@ -46,12 +46,10 @@ describe('match', () => {
       lUserInfo.participate.matchmakingId
     );
     expect(respAccept.statusCode).toBe(200);
-      
-    let matchInfo = await requestGetMatchInfo(
-      lUserInfo2.token
-    );
+
+    let matchInfo = await requestGetMatchInfo(lUserInfo2.token);
     expect(matchInfo.statusCode).toBe(200);
-    
+
     done();
   });
 
@@ -83,7 +81,7 @@ describe('match', () => {
     expect(lRes0.statusCode).toBe(400);
     done();
   });
-  
+
   test('init deck player 1 with twice same card', async (done) => {
     const lResCards = await requestCards();
     const cards = [...lResCards.body.slice(0, 19), lResCards.body[0]];
@@ -114,9 +112,26 @@ describe('match', () => {
   test('deck is already defined', async (done) => {
     const lResCards = await requestCards();
     const cards = [...lResCards.body.slice(0, 20)];
-     await requestInitDeck(cards, lUserInfo.token);
+    await requestInitDeck(cards, lUserInfo.token);
     const lRes2 = await requestInitDeck(cards, lUserInfo.token);
     expect(lRes2.statusCode).toBe(400);
+    done();
+  });
+
+  test('two decks are ok', async (done) => {
+    const lResCards = await requestCards();
+    const cards = [...lResCards.body.slice(0, 20)];
+    
+    await requestInitDeck(cards, lUserInfo.token);
+
+    let matchInfo2 = await requestGetMatchInfo(lUserInfo2.token);
+    expect(matchInfo2.statusCode).toBe(200);
+
+    await requestInitDeck(cards, lUserInfo2.token);
+    
+    matchInfo2 = await requestGetMatchInfo(lUserInfo2.token);
+    expect(matchInfo2.statusCode).toBe(200);
+    expect(matchInfo2.status).toEqual('Turn : player 1');
     done();
   });
 });
