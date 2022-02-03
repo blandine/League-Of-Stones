@@ -107,6 +107,16 @@ describe('match', () => {
     const cards = [...lResCards.body.slice(0, 20)];
     const lRes1 = await requestInitDeck(cards, lUserInfo.token);
     expect(lRes1.statusCode).toBe(200);
+    expect(lRes1.body.deck).toEqual('initialized');
+    done();
+  });
+
+  test('deck is already defined', async (done) => {
+    const lResCards = await requestCards();
+    const cards = [...lResCards.body.slice(0, 20)];
+     await requestInitDeck(cards, lUserInfo.token);
+    const lRes2 = await requestInitDeck(cards, lUserInfo.token);
+    expect(lRes2.statusCode).toBe(400);
     done();
   });
 });

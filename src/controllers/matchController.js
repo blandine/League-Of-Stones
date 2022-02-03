@@ -50,11 +50,13 @@ async function initDeck(req, res) {
   sendResponse(response, res, req);
 
 }
+
 async function pickCard(req, res) {
   const lPlayingPlayerId = req.session.connectedUser.id;
   const response = await pickCardService(lPlayingPlayerId);
   sendResponse(response, res, req);
 }
+
 async function playCard(req, res) {
   const lPlayingPlayerId = req.session.connectedUser.id;
   const pCard = req.query.card;
