@@ -165,13 +165,18 @@ describe('match', () => {
     expect(response.body.message).toEqual('Card is not in the hand');
     done()
    })
-     // test('player 1 play an inexistant card of his hand',(done)=>{
-  //   matchInfo2 = await requestGetMatchInfo(lUserInfo2.token);
-  //   expect(matchInfo2.status).toEqual('Turn : player 1');
-     
-  //     requestPlayCard(3900,)
-  //     done()
-  //   })
+
+   
+   test('player 1 plays her first valid card',async(done)=>{
+    matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
+    expect(matchInfo1.body.status).toEqual('Turn : player 1');
+    const cardKey = matchInfo1.body.player1.hand[0].key
+    const response = await requestPlayCard(cardKey,lUserInfo.token)
+    expect(response.statusCode).toBe(200) 
+    matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
+    expect(matchInfo1.body.status).toEqual('Turn : player 1');
+    done()
+   })
 
   })
   

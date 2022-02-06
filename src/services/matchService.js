@@ -274,8 +274,8 @@ async function pickCardService(pPlayingPlayerId) {
   }
 }
 
-function getCardIndexFromKey(pHand, pCardKey) {
-  return pHand.findIndex((elem) => elem.key == pCardKey);
+function getCardIndexFromKey(pCards, pCardKey) {
+  return pCards.find((elem) => elem.key == pCardKey);
 }
 
 async function playCardService(pPlayingPlayerId, pCardKey) {
@@ -291,15 +291,16 @@ async function playCardService(pPlayingPlayerId, pCardKey) {
       throw 'Not your turn';
     }
     if (!lMatchPlayer.board?.length >= 5) {
-      throw 'Board full';
+      throw 'Board full'; //todo
     }
-    let lCardIndex = getCardIndexFromKey(lMatchPlayer.board, pCardKey);
-    if (lCardIndex ===-1) {
+    const lCardIndex = getCardIndexFromKey(lMatchPlayer.hand, pCardKey);
+    if (lCardIndex === -1) {
       throw 'Card is not in the hand'
     }
     const lNewHand = [...lMatchPlayer.hand];
-    lNewHand.splice(lCardIndex, 1);
-    const lAttackCard = { ...pCardKey, attack: true };
+    const removedCards = lNewHand.splice(lCardIndex, 1);
+    
+    const lAttackCard = { ...removedCards[0], attack: true };
     const lNewBoard = [...lMatchPlayer.board, lAttackCard];
     const lCurrentMatch = {
       ...lMatchDocument,
@@ -334,7 +335,8 @@ async function attackCardService(pPlayingPlayerId, pCard, pEnemyCard) {
       throw 'Not your turn'
     }
 
-    let lCardIndex = getCardIndexFromKey(lPlayerBoard, pCard);
+    //todo return an index not a card
+    let lCardIndex = getCardIndexFromKey(lPlayerBoard, pCard); 
     if (!lCardIndex) {
       throw "Player's card is not on the board"
     }
@@ -344,6 +346,7 @@ async function attackCardService(pPlayingPlayerId, pCard, pEnemyCard) {
       throw 'This card has already attacked'
     }
 
+    //todo return an index not a card
     const lEnemyCardIndex = getCardIndexFromKey(lEnemyBoard, pEnemyCard);
     if (!lEnemyCardIndex) {
       throw "Ennemy's card is not on the board"
@@ -405,6 +408,7 @@ async function attackPlayerService(pPlayingPlayerId, pCard) {
       throw 'Not your turn'
     }
 
+    //todo return an index not a card
     let lCardIndex = getCardIndexFromKey(lPlayerBoard, pCard);
     if (!lCardIndex) {
       throw "Player's card is not on the board"
