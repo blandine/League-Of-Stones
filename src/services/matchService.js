@@ -1,8 +1,8 @@
-const { StatusCodeError } = require('../routes/utils.js');
-const { MongoDBConnection } = require('../utils/database.js');
+const { StatusCodeError } = require('../routes/utils.js')
+const { MongoDBConnection } = require('../utils/database.js')
 
 const ObjectId = require('mongodb').ObjectID;
-const { all_different } = require('../utils/misc.js');
+const { all_different } = require('../utils/misc.js')
 const MATCH_STATUS = {
   DeckIsPending: 'Deck is pending',
   TurnPlayer1: 'Turn : player 1',
@@ -246,13 +246,13 @@ async function pickCardService(pPlayingPlayerId) {
     const lMatchPlayer = lMatchDocument[lPlayer];
 
     if (!lPlayer.turn) {
-      throw new Error('Not your turn');
+      throw 'Not your turn'
     }
     if (lPlayer.cardPicked == true) {
-      throw new Error('Card already picked');
+      throw 'Card already picked'
     }
     if (!getDeckLength(lMatchPlayer)) {
-      throw new Error('Deck is empty');
+      throw 'Deck is empty'
     }
     const lNewDeck = [...lMatchPlayer.deck];
     const lPickedCard = lNewDeck.splice(0, 1)[0];
@@ -274,11 +274,11 @@ async function pickCardService(pPlayingPlayerId) {
   }
 }
 
-function getCardIndex(pHand, pCard) {
-  return pHand.find((elem) => elem.key == pCard.key);
+function getCardIndexFromKey(pHand, pCardKey) {
+  return pHand.findIndex((elem) => elem.key == pCardKey);
 }
 
-async function playCardService(pPlayingPlayerId, pCard) {
+async function playCardService(pPlayingPlayerId, pCardKey) {
   try {
     const lMatchDocument = await getCurrentMatch(pPlayingPlayerId);
     if (!lMatchDocument) {
@@ -287,19 +287,19 @@ async function playCardService(pPlayingPlayerId, pCard) {
     const lPlayer = getConnectedPlayer(pPlayingPlayerId, lMatchDocument);
     const lMatchPlayer = lMatchDocument[lPlayer];
 
-    if (!lPlayer.turn) {
-      throw new Error('Not your turn');
+    if (!lMatchPlayer.turn) {
+      throw 'Not your turn';
     }
-    if (!lPlayer.board.length >= 5) {
-      throw new Error('Board full');
+    if (!lMatchPlayer.board?.length >= 5) {
+      throw 'Board full';
     }
-    let lCardIndex = getCardIndex(lMatchPlayer.board, pCard);
-    if (!lCardIndex) {
-      throw new Error('Card is not in the hand');
+    let lCardIndex = getCardIndexFromKey(lMatchPlayer.board, pCardKey);
+    if (lCardIndex ===-1) {
+      throw 'Card is not in the hand'
     }
     const lNewHand = [...lMatchPlayer.hand];
     lNewHand.splice(lCardIndex, 1);
-    const lAttackCard = { ...pCard, attack: true };
+    const lAttackCard = { ...pCardKey, attack: true };
     const lNewBoard = [...lMatchPlayer.board, lAttackCard];
     const lCurrentMatch = {
       ...lMatchDocument,
@@ -331,22 +331,22 @@ async function attackCardService(pPlayingPlayerId, pCard, pEnemyCard) {
     let lStatus = lMatchDocument.status;
 
     if (!lPlayer.turn) {
-      throw new Error('Not your turn');
+      throw 'Not your turn'
     }
 
-    let lCardIndex = getCardIndex(lPlayerBoard, pCard);
+    let lCardIndex = getCardIndexFromKey(lPlayerBoard, pCard);
     if (!lCardIndex) {
-      throw new Error("Player's card is not on the board");
+      throw "Player's card is not on the board"
     }
 
     const lCard = lPlayerBoard[lCardIndex];
     if (lCard.attack === true) {
-      throw new Error('This card has already attacked');
+      throw 'This card has already attacked'
     }
 
-    const lEnemyCardIndex = getCardIndex(lEnemyBoard, pEnemyCard);
+    const lEnemyCardIndex = getCardIndexFromKey(lEnemyBoard, pEnemyCard);
     if (!lEnemyCardIndex) {
-      throw new Error("Ennemy's card is not on the board");
+      throw "Ennemy's card is not on the board"
     }
     const lEnemyCard = lEnemyBoard[lEnemyCardIndex];
     //starts attack
@@ -402,21 +402,21 @@ async function attackPlayerService(pPlayingPlayerId, pCard) {
     let lStatus = lMatchDocument.status;
 
     if (!lPlayer.turn) {
-      throw new Error('Not your turn');
+      throw 'Not your turn'
     }
 
-    let lCardIndex = getCardIndex(lPlayerBoard, pCard);
+    let lCardIndex = getCardIndexFromKey(lPlayerBoard, pCard);
     if (!lCardIndex) {
-      throw new Error("Player's card is not on the board");
+      throw "Player's card is not on the board"
     }
 
     const lCard = lPlayerBoard[lCardIndex];
     if (lCard.attack === true) {
-      throw new Error('This card has already attacked');
+      throw 'This card has already attacked'
     }
 
     if (lEnemyBoard.length !== 0) {
-      throw new Error('Enemy is still moving (their board is not empty)');
+      throw 'Enemy is still moving (their board is not empty)'
     }
     //starts attack
     lCard.attack = true;
@@ -460,7 +460,7 @@ async function endTurnService(pPlayingPlayerId) {
     const lEnemyPlayer = { ...lMatchDocument[lEnemy] };
 
     if (!lPlayer.turn) {
-      throw new Error('Not your turn');
+      throw 'Not your turn'
     }
     lMatchPlayer.cardPicked = false;
     lMatchPlayer.turn = false;
@@ -491,7 +491,7 @@ async function finishMatchService(pPlayingPlayerId) {
       lMatchDocument[lPlayer].turn == true ||
       lMatchDocument[lEnemy].turn == true
     ) {
-      throw new Error('Match is not finished');
+      throw 'Match is not finished'
     }
     const lMatchId = lMatchDocument._id;
     await removeMatch(lMatchId);

@@ -34,7 +34,7 @@ function destroySession(req) {
 
 
 function sendResponse([response, error], res, req) {
-  if (error) {
+  if (error) {  
     return sendError(error, res);
   } else {
     if (typeof response == 'string') {
@@ -53,7 +53,10 @@ function sendResponse([response, error], res, req) {
 
 function sendError(error, res) {
   //console.error('Caught error : ' + error);
-  res.status(error.code == undefined ? 400 : error.code);
+  if (typeof error == 'string') {  
+    error = new StatusCodeError(error)
+  } 
+  res.status(error.code ?? 400);
   res.json(error);
 }
 module.exports = { sendResponse, sendError, StatusCodeError };

@@ -108,7 +108,8 @@ async function participateService(pUser) {
         }
     }
     if (lResult.matchmakingId == undefined) {
-        throw new Error("undefined matchmaking")
+        // TODO to test
+        return [null, new StatusCodeError("Undefined matchmaking", 404)]
     }
     return [lResult, null];
 }

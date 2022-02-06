@@ -31,7 +31,7 @@ function extractDeck(pDeck) {
   try {
     const lDeck = JSON.parse(pDeck);
     if (!lDeck instanceof Array) {
-      throw new Error('should be an array');
+      throw 'should be an array'
     }
     return [lDeck, null]
   } catch (e) {
@@ -59,12 +59,12 @@ async function pickCard(req, res) {
 
 async function playCard(req, res) {
   const lPlayingPlayerId = req.session.connectedUser.id;
-  const pCard = req.query.card;
-  if (!pCard) {
+  const pCardKey = req.query.card;
+  if (!pCardKey) {
     sendError(new StatusCodeError('Card query parameter is missing', 400), res);
     return;
   }
-  const response = await playCardService(lPlayingPlayerId, pCard);
+  const response = await playCardService(lPlayingPlayerId, pCardKey);
   sendResponse(response, res, req);
 }
 
@@ -73,11 +73,11 @@ async function attackCard(req, res) {
     const lPlayingPlayerId = req.session.connectedUser.id;
     const pCard = req.query.card;
     if (!pCard) {
-      throw new Error('card query parameter is missing');
+      throw 'card query parameter is missing'
     }
     const pEnemyCard = req.query.ennemyCard;
     if (!pEnemyCard) {
-      throw new Error('ennemyCard query parameter is missing');
+      throw 'ennemyCard query parameter is missing'
     }
 
     const response = await attackCardService(lPlayingPlayerId, pCard, pEnemyCard);
@@ -92,7 +92,7 @@ async function attackPlayer(req, res) {
     const lPlayingPlayerId = req.session.connectedUser.id;
     const pCard = req.query.card;
     if (!pCard) {
-      throw new Error('card query parameter is missing');
+      throw 'card query parameter is missing'
     }
     const response = await attackPlayerService(lPlayingPlayerId, pCard);
     sendResponse(response, res, req);
