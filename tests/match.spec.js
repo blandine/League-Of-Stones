@@ -8,6 +8,7 @@ const {
   requestCards,
   requestInitDeck,
   requestGetMatchInfo,
+  requestPlayCard,
 } = require('./requests');
 setupDb();
 
@@ -54,8 +55,8 @@ describe('match', () => {
   });
 
   afterAll(async (done) => {
-    let resplogout = await logout(lUserInfo.id);
-    resplogout = await logout(lUserInfo2.id);
+    await logout(lUserInfo.id);
+    await logout(lUserInfo2.id);
     done();
   });
 
@@ -131,7 +132,48 @@ describe('match', () => {
     
     matchInfo2 = await requestGetMatchInfo(lUserInfo2.token);
     expect(matchInfo2.statusCode).toBe(200);
-    expect(matchInfo2.status).toEqual('Turn : player 1');
+    expect(matchInfo2.body.status).toEqual('Turn : player 1');
     done();
   });
+
+  describe('start playing',()=>{
+    beforeAll(async (done)=>{
+      
+    const lResCards = await requestCards();
+    const cards = [...lResCards.body.slice(0, 20)];
+      await requestInitDeck(cards, lUserInfo.token);
+      await requestInitDeck(cards, lUserInfo2.token);
+     
+      done();
+   })
+
+   test('player 2 try to play before her turn',async(done)=>{
+    matchInfo2 = await requestGetMatchInfo(lUserInfo2.token);
+    expect(matchInfo2.body.status).toEqual('Turn : player 1');
+    const card = matchInfo2.body.player2.hand[0]
+    const response = await requestPlayCard(card.key,lUserInfo2.token)
+    expect(response.statusCode).toBe(400) 
+    expect(response.body.message).toEqual('Not your turn');
+    done()
+   })
+   test('player 1 try to play an unknown card',async(done)=>{
+    matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
+    expect(matchInfo1.body.status).toEqual('Turn : player 1');
+    const cardKey = 'TEST'
+    const response = await requestPlayCard(cardKey,lUserInfo.token)
+    expect(response.statusCode).toBe(400) 
+    expect(response.body.message).toEqual('Card is not in the hand');
+    done()
+   })
+     // test('player 1 play an inexistant card of his hand',(done)=>{
+  //   matchInfo2 = await requestGetMatchInfo(lUserInfo2.token);
+  //   expect(matchInfo2.status).toEqual('Turn : player 1');
+     
+  //     requestPlayCard(3900,)
+  //     done()
+  //   })
+
+  })
+  
 });
+

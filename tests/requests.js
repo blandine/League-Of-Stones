@@ -72,9 +72,9 @@ function requestPickCard(pToken) {
         .get(`/match/pickCard`)
         .set('WWW-authenticate', pToken);
 }
-function requestPlayCard(pToken) {
+function requestPlayCard(pCardId,pToken) {
     return request(app)
-        .get(`/match/playCard`)
+        .get(`/match/playCard?card=${pCardId}`)
         .set('WWW-authenticate', pToken);
 }
 function requestAttackPlayer(pCardId, pToken) {
