@@ -275,7 +275,7 @@ async function pickCardService(pPlayingPlayerId) {
 }
 
 function getCardIndexFromKey(pCards, pCardKey) {
-  return pCards.find((elem) => elem.key == pCardKey);
+  return pCards.findIndex((elem) => elem.key == pCardKey);
 }
 
 async function playCardService(pPlayingPlayerId, pCardKey) {
@@ -335,9 +335,8 @@ async function attackCardService(pPlayingPlayerId, pCard, pEnemyCard) {
       throw 'Not your turn'
     }
 
-    //todo return an index not a card
     let lCardIndex = getCardIndexFromKey(lPlayerBoard, pCard); 
-    if (!lCardIndex) {
+    if (lCardIndex === -1) {
       throw "Player's card is not on the board"
     }
 
@@ -346,9 +345,8 @@ async function attackCardService(pPlayingPlayerId, pCard, pEnemyCard) {
       throw 'This card has already attacked'
     }
 
-    //todo return an index not a card
     const lEnemyCardIndex = getCardIndexFromKey(lEnemyBoard, pEnemyCard);
-    if (!lEnemyCardIndex) {
+    if (lEnemyCardIndex === -1) {
       throw "Ennemy's card is not on the board"
     }
     const lEnemyCard = lEnemyBoard[lEnemyCardIndex];
@@ -408,9 +406,8 @@ async function attackPlayerService(pPlayingPlayerId, pCard) {
       throw 'Not your turn'
     }
 
-    //todo return an index not a card
     let lCardIndex = getCardIndexFromKey(lPlayerBoard, pCard);
-    if (!lCardIndex) {
+    if (lCardIndex === -1) {
       throw "Player's card is not on the board"
     }
 
@@ -419,7 +416,7 @@ async function attackPlayerService(pPlayingPlayerId, pCard) {
       throw 'This card has already attacked'
     }
 
-    if (lEnemyBoard.length !== 0) {
+    if (lEnemyBoard.length) {
       throw 'Enemy is still moving (their board is not empty)'
     }
     //starts attack
