@@ -9,6 +9,7 @@ const {
   requestInitDeck,
   requestGetMatchInfo,
   requestPlayCard,
+  requestPickCard,
 } = require('./requests');
 setupDb();
 
@@ -178,7 +179,26 @@ describe('match', () => {
     done()
    })
 
-  })
+  test('player 1 can pick only one card',async(done)=>{
+    matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
+    expect(matchInfo1.body.status).toEqual('Turn : player 1');
+    expect(matchInfo1.body.player1.hand.length).toBe(4)
+
+    
+    const response = await requestPickCard(lUserInfo.token)
+    expect(response.statusCode).toBe(200)
+    matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
+    expect(matchInfo1.body.player1.hand.length).toBe(5)
+
+    const response2 = await requestPickCard(lUserInfo.token)
+    expect(response2.statusCode).toBe(400)
+    
+    matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
+    expect(matchInfo1.body.player1.hand.length).toBe(5)
+    done()
+   })
   
+ 
+  })
 });
 

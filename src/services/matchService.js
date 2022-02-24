@@ -188,18 +188,19 @@ async function getCardsInfo(pDeck) {
     .toArray();
 }
 
-function shuffle(a) {
+function shuffle(cards) {
+  const a = cards.slice()
   for (let i = a.length; i; i--) {
     let j = Math.floor(Math.random() * i);
     [a[i - 1], a[j]] = [a[j], a[i - 1]];
   }
+  return a
 }
 
 async function all_defined(deck) {
   const lCards = await getCardsInfo(deck);
-  if (lCards && lCards.length === 20) {
-    shuffle(lCards);
-    return lCards;
+  if (lCards?.length === 20) {
+    return shuffle(lCards);
   }
   return null;
 }
@@ -245,10 +246,10 @@ async function pickCardService(pPlayingPlayerId) {
     const lPlayer = getConnectedPlayer(pPlayingPlayerId, lMatchDocument);
     const lMatchPlayer = lMatchDocument[lPlayer];
 
-    if (!lPlayer.turn) {
+    if (!lMatchPlayer.turn) {
       throw 'Not your turn'
     }
-    if (lPlayer.cardPicked == true) {
+    if (lMatchPlayer.cardPicked == true) {
       throw 'Card already picked'
     }
     if (!getDeckLength(lMatchPlayer)) {
