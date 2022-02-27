@@ -203,11 +203,14 @@ async function acceptRequestService(pMatchmakingId, pRequestedMatchmakingId, pPl
         return [null, new StatusCodeError("Requested matchmakingId does not exist", 404)]
     }
     const lRequestedMatchmakingId = await getMatchmakingById(pRequestedMatchmakingId);
-    if (lRequestedMatchmakingId.match) {
+    if (!lRequestedMatchmakingId) {
+        return [null, new StatusCodeError("Requested match does not exist", 400)];
+    }
+    if (lRequestedMatchmakingId?.match) {
         return [null, new StatusCodeError("Already in match (too late)", 409)];
     }
 
-    return createNewMatch(pMatchmakingId, pRequestedMatchmakingId, pPlayerId, pPlayerName, lRequestedMatchmakingId.user.id, lRequestedMatchmakingId.user.name)
+    return createNewMatch(pMatchmakingId, pRequestedMatchmakingId, pPlayerId, pPlayerName, lRequestedMatchmakingId?.user?.id, lRequestedMatchmakingId?.user?.name)
 }
 
 module.exports = {
