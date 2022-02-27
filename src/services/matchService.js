@@ -332,7 +332,7 @@ async function attackCardService(pPlayingPlayerId, pCard, pEnemyCard) {
     const lEnemyBoard = lEnemyPlayer.board;
     let lStatus = lMatchDocument.status;
 
-    if (!lPlayer.turn) {
+    if (!lMatchPlayer.turn) {
       throw 'Not your turn'
     }
 
@@ -359,7 +359,7 @@ async function attackCardService(pPlayingPlayerId, pCard, pEnemyCard) {
       lEnemyPlayer.hp -= lDamage;
       if (lEnemyPlayer.hp <= 0) {
         lEnemyPlayer.turn = false;
-        lPlayer.turn = false;
+        lMatchPlayer.turn = false;
         lStatus = `Player ${lPlayer} won`;
       }
       lEnemyBoard.splice(lEnemyCardIndex, 1);
@@ -403,7 +403,7 @@ async function attackPlayerService(pPlayingPlayerId, pCard) {
     const lEnemyBoard = lEnemyPlayer.board;
     let lStatus = lMatchDocument.status;
 
-    if (!lPlayer.turn) {
+    if (!lMatchPlayer.turn) {
       throw 'Not your turn'
     }
 
@@ -427,7 +427,7 @@ async function attackPlayerService(pPlayingPlayerId, pCard) {
     lEnemyPlayer.hp -= lCard.info.attack;
     if (lEnemyPlayer.hp <= 0) {
       lEnemyPlayer.turn = false;
-      lPlayer.turn = false;
+      lMatchPlayer.turn = false;
       lStatus = `Player ${lPlayer} won`;
     }
 
@@ -461,7 +461,7 @@ async function endTurnService(pPlayingPlayerId) {
     const lMatchPlayer = { ...lMatchDocument[lPlayer] };
     const lEnemyPlayer = { ...lMatchDocument[lEnemy] };
 
-    if (!lPlayer.turn) {
+    if (!lMatchPlayer.turn) {
       throw 'Not your turn'
     }
     lMatchPlayer.cardPicked = false;
