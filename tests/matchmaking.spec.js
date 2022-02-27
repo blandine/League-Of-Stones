@@ -1,5 +1,5 @@
-const { createAccount } = require("../src/services/usersService.js");
-const { mocks, setupDb, time } = require("./common.js");
+const { createAccount, logout } = require("../src/services/usersService.js");
+const { mocks, setupDb } = require("./common.js");
 const {
     requestAcceptRequest,
     requestGetAll,
@@ -15,35 +15,40 @@ setupDb();
 describe("matchmaking", () => {
     let lUserInfo;
     let lUserInfo2;
+    let lUser1 = mocks.user3
+    let lUser2 = mocks.user4
     beforeAll(async (done) => {
         // Connect to a Mongo DB
-        await createAccount(mocks.user1.email, mocks.user1.password, mocks.user1.name);
-
-        await createAccount(mocks.user2.email, mocks.user2.password, mocks.user2.name);
+        await createAccount(lUser1.email, lUser1.password, lUser1.name);
+        await createAccount(lUser2.email, lUser2.password, lUser2.name);
         done();
 
     })
 
-    afterAll(async (done) => {
-        // Connect to a Mongo DB
-        let logout = (await requestLogout(lUserInfo.token));
-        logout = (await requestLogout(lUserInfo2.token));
+    afterEach(async (done) => {
+        if(lUserInfo?.id){
+            await logout(lUserInfo.id);
+        }
+        if(lUserInfo2?.id){
+            await logout(lUserInfo2.id);
+        }
         done();
-    })
+      });
+    
     describe("Test the participate", () => {
 
         test("participate without loging", async done => {
-            lUserInfo = (await requestLogin(mocks.user1)).body;
+            lUserInfo = (await requestLogin(lUser1)).body;
             let logout = (await requestLogout(lUserInfo.token));
 
             let response = await requestParticipate(lUserInfo.token);
             expect(response.statusCode).toBe(401);
             expect(response.body.message).toBe("User not connected.");
             done();
-        }, time);
+        });
 
         test("participate existing user", async done => {
-            lUserInfo = (await requestLogin(mocks.user1)).body;
+            lUserInfo = (await requestLogin(lUser1)).body;
             let response = await requestParticipate(lUserInfo.token);
             expect(response.statusCode).toBe(200);
             expect(typeof response.body.matchmakingId).toBe("string");
@@ -52,7 +57,7 @@ describe("matchmaking", () => {
         });
 
         test("participate twice existing user", async done => {
-            lUserInfo = (await requestLogin(mocks.user1)).body;
+            lUserInfo = (await requestLogin(lUser1)).body;
             let response = await requestParticipate(lUserInfo.token);
             expect(response.statusCode).toBe(200);
             const lMMId1 = response.body.matchmakingId;
@@ -64,8 +69,8 @@ describe("matchmaking", () => {
         });
 
         test("participate other user", async done => {
-            lUserInfo = (await requestLogin(mocks.user1)).body;
-            lUserInfo2 = (await requestLogin(mocks.user2)).body;
+            lUserInfo = (await requestLogin(lUser1)).body;
+            lUserInfo2 = (await requestLogin(lUser2)).body;
             let response = await requestParticipate(lUserInfo.token);
             const lMMId1 = response.body.matchmakingId;
             let response1 = await requestParticipate(lUserInfo2.token);
@@ -77,22 +82,18 @@ describe("matchmaking", () => {
 
     })
     describe("send request", () => {
-        beforeAll(async (done) => {
-
-            lUserInfo = (await requestLogin(mocks.user1)).body;
-            lUserInfo2 = (await requestLogin(mocks.user2)).body;
-            done();
-
-        })
-
-        afterAll(async (done) => {
-            const logoutRes = (await requestLogout(lUserInfo.token));
-            const logoutRes2 = (await requestLogout(lUserInfo2.token));
+        beforeEach(async (done) => {
+            lUserInfo = (await requestLogin(lUser1)).body;
+            lUserInfo2 = (await requestLogin(lUser2)).body;
             done();
         })
+
         test("request other user", async done => {
             let lMMId1 = (await requestParticipate(lUserInfo.token)).body.matchmakingId;
-            let lMMId2 = (await requestParticipate(lUserInfo2.token)).body.matchmakingId;
+            let lParticipate2 = await requestParticipate(lUserInfo2.token)
+            expect(lParticipate2.body.request).toHaveLength(0);
+            let lMMId2 =lParticipate2.body.matchmakingId;
+
 
             const lRes = (await requestSendRequest(lUserInfo.token, lMMId2));
             expect(lRes.statusCode).toEqual(200)
@@ -109,18 +110,25 @@ describe("matchmaking", () => {
             expect(lMMRequests2bis).toHaveLength(1);
 
             done();
-        }, time);
+        });
+
+        test('prevent unparticipate before having participated',async (done)=>{
+            let response1 = await requestParticipate(lUserInfo2.token);
+            const lMMId2 = response1.body.matchmakingId;
+
+            let {statusCode,body} = await requestUnparticipate(lUserInfo.token);
+            expect(statusCode).toEqual(400)
+            expect(body.message).toBe("Matchmaking is undefined. Participate to have one!")
+            done()
+        })
 
         test("send request without participating", async done => {
             let response1 = await requestParticipate(lUserInfo2.token);
             const lMMId2 = response1.body.matchmakingId;
 
-            let response2 = await requestUnparticipate(lUserInfo.token);
-            expect(response2.statusCode).toEqual(200)
-
-            const lRes = (await requestSendRequest(lUserInfo.token, lMMId2));
-            expect(lRes.body.message).toEqual("Matchmaking is undefined. Participate to have one!")
-            expect(lRes.statusCode).toEqual(400)
+            const  {statusCode,body} = (await requestSendRequest(lUserInfo.token, lMMId2));
+            expect(body.message).toEqual("Matchmaking is undefined. Participate to have one!")
+            expect(statusCode).toEqual(400)
 
             done();
         });
@@ -145,8 +153,8 @@ describe("matchmaking", () => {
         let lMMId2;
         beforeAll(async (done) => {
 
-            lUserInfo = (await requestLogin(mocks.user1)).body;
-            lUserInfo2 = (await requestLogin(mocks.user2)).body;
+            lUserInfo = (await requestLogin(lUser1)).body;
+            lUserInfo2 = (await requestLogin(lUser2)).body;
             done();
 
         })
@@ -157,9 +165,13 @@ describe("matchmaking", () => {
             done();
 
         })
-        afterAll(async (done) => {
-            const logoutRes = (await requestLogout(lUserInfo.token));
-            const logoutRes2 = (await requestLogout(lUserInfo2.token));
+        afterEach(async (done) => {
+            if(lUserInfo?.id){
+                await logout(lUserInfo.id);
+              }
+              if(lUserInfo2?.id){
+                  await logout(lUserInfo2.id);
+              }
             done();
         })
         test("unparticipate", async done => {
@@ -208,7 +220,7 @@ describe("matchmaking", () => {
             expect(response0.body).toHaveLength(0);
             done();
 
-        }, time);
+        });
 
         test("acceptRequest", async done => {
             let response0 = await requestSendRequest(lUserInfo.token, lMMId2);
@@ -219,7 +231,7 @@ describe("matchmaking", () => {
             expect(response2.statusCode).toEqual(404);
             done();
 
-        }, time);
+        });
     })
 
 })

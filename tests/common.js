@@ -22,6 +22,17 @@ const user2 = {
     password: 'n3lL',
 };
 
+const user3 = {
+    email: 'foxy2@cat.com',
+    name: 'Foxy',
+    password: 'f0xY',
+};
+const user4 = {
+    email: 'nell2@cat.com',
+    name: 'Nell',
+    password: 'n3lL',
+};
+
 
 function setupDb() {
     beforeAll(async (done) => {
@@ -45,7 +56,9 @@ module.exports = {
         user,
         userbis,
         user1,
-        user2
+        user2,
+        user3,
+        user4
     },
-    setupDb, time: 10000
+    setupDb
 };
