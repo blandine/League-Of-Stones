@@ -12,12 +12,16 @@ const {
   finishMatchService
 } = require('../services/matchService');
 
+function getSessionId(req){
+  return req.session.connectedUser.id
+}
+
 async function getMatchData(req, res) {
-  if (!req.session.connectedUser || !req.session.connectedUser.id) {
+  if (!req.session.connectedUser || !getSessionId(req)) {
     sendError(new StatusCodeError("Session is invalid", 400), res);
     return;
   }
-  const lPlayingPlayerId = req.session.connectedUser.id;
+  const lPlayingPlayerId = getSessionId(req);
   const response = await getMatchDataService(lPlayingPlayerId);
   sendResponse(response, res, req);
 }
@@ -45,20 +49,20 @@ async function initDeck(req, res) {
     sendError(error, res);
     return;
   }
-  const lPlayingPlayerId = req.session.connectedUser.id;
+  const lPlayingPlayerId = getSessionId(req);
   const response = await initDeckService(lPlayingPlayerId, lDeck);
   sendResponse(response, res, req);
 
 }
 
 async function pickCard(req, res) {
-  const lPlayingPlayerId = req.session.connectedUser.id;
+  const lPlayingPlayerId = getSessionId(req);
   const response = await pickCardService(lPlayingPlayerId);
   sendResponse(response, res, req);
 }
 
 async function playCard(req, res) {
-  const lPlayingPlayerId = req.session.connectedUser.id;
+  const lPlayingPlayerId = getSessionId(req);
   const pCardKey = req.query.card;
   if (!pCardKey) {
     sendError(new StatusCodeError('Card query parameter is missing', 400), res);
@@ -70,7 +74,7 @@ async function playCard(req, res) {
 
 async function attackCard(req, res) {
   try {
-    const lPlayingPlayerId = req.session.connectedUser.id;
+    const lPlayingPlayerId = getSessionId(req);
     const pCard = req.query.card;
     if (!pCard) {
       throw 'card query parameter is missing'
@@ -89,7 +93,7 @@ async function attackCard(req, res) {
 
 async function attackPlayer(req, res) {
   try {
-    const lPlayingPlayerId = req.session.connectedUser.id;
+    const lPlayingPlayerId = getSessionId(req);
     const pCard = req.query.card;
     if (!pCard) {
       throw 'card query parameter is missing'
@@ -102,13 +106,13 @@ async function attackPlayer(req, res) {
 }
 
 async function endTurn(req, res) {
-  const lPlayingPlayerId = req.session.connectedUser.id;
+  const lPlayingPlayerId = getSessionId(req);
   const response = await endTurnService(lPlayingPlayerId, pCard);
   sendResponse(response, res, req);
 }
 
 async function finishMatch(req, res) {
-  const lPlayingPlayerId = req.session.connectedUser.id;
+  const lPlayingPlayerId = getSessionId(req);
   const response = await finishMatchService(lPlayingPlayerId);
   sendResponse(response, res, req);
 }
