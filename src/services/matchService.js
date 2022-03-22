@@ -270,8 +270,8 @@ async function playCardService(pMatchDocument, lPlayer, pCardKey) {
     return [null, new StatusCodeError(error, 400)];
   }
 }
-async function playCardService_impl(lMatchDocument, lPlayer, pCardKey) {
-  const lMatchPlayer = lMatchDocument[lPlayer];
+async function playCardService_impl(pMatchDocument, pPlayer, pCardKey) {
+  const lMatchPlayer = pMatchDocument[pPlayer];
 
     if (!lMatchPlayer.turn) {
       throw 'Not your turn';
@@ -289,14 +289,14 @@ async function playCardService_impl(lMatchDocument, lPlayer, pCardKey) {
     const lAttackCard = { ...removedCards[0], attack: true };
     const lNewBoard = [...lMatchPlayer.board, lAttackCard];
     const lCurrentMatch = {
-      ...lMatchDocument,
-      [lPlayer]: {
+      ...pMatchDocument,
+      [pPlayer]: {
         ...lMatchPlayer,
         hand: lNewHand,
         board: lNewBoard,
       },
     };
-    await updateMatch(lMatchDocument._id, lCurrentMatch);
+    await updateMatch(pMatchDocument._id, lCurrentMatch);
     return [{ player: { board: lNewBoard, hand: lNewHand } }, null];
 }
 
@@ -367,23 +367,14 @@ async function attackCardService(pPlayingPlayerId, pCard, pEnemyCard) {
   }
 }
 
-async function attackPlayerService(pPlayingPlayerId, pCard) {
+async function attackPlayerService(pPlayer, pCard, lMatchDocument) {
   try {
-    const lMatchDocument = await getCurrentMatch(pPlayingPlayerId);
-    if (!lMatchDocument) {
-      return [null, new StatusCodeError('There is no match associated', 404)];
-    }
-    const lPlayer = getConnectedPlayer(pPlayingPlayerId, lMatchDocument);
-    const lEnemy = WHO[lPlayer].enemy;
-    const lMatchPlayer = { ...lMatchDocument[lPlayer] };
+    const lEnemy = WHO[pPlayer].enemy;
+    const lMatchPlayer = { ...lMatchDocument[pPlayer] };
     const lEnemyPlayer = { ...lMatchDocument[lEnemy] };
     const lPlayerBoard = lMatchPlayer.board;
     const lEnemyBoard = lEnemyPlayer.board;
     let lStatus = lMatchDocument.status;
-
-    if (!lMatchPlayer.turn) {
-      throw 'Not your turn'
-    }
 
     let lCardIndex = getCardIndexFromKey(lPlayerBoard, pCard);
     if (lCardIndex === -1) {
@@ -406,19 +397,19 @@ async function attackPlayerService(pPlayingPlayerId, pCard) {
     if (lEnemyPlayer.hp <= 0) {
       lEnemyPlayer.turn = false;
       lMatchPlayer.turn = false;
-      lStatus = `Player ${lPlayer} won`;
+      lStatus = `Player ${pPlayer} won`;
     }
 
     const lCurrentMatch = {
       status: lStatus,
-      [lPlayer]: lMatchPlayer,
+      [pPlayer]: lMatchPlayer,
       [lEnemy]: lEnemyPlayer,
     };
     await updateMatch(lMatchDocument._id, lCurrentMatch);
     return [
       {
         status: lStatus,
-        [lPlayer]: { board: lPlayerBoard, hp: lMatchPlayer.hp },
+        [pPlayer]: { board: lPlayerBoard, hp: lMatchPlayer.hp },
         [lEnemy]: { board: lEnemyBoard, hp: lEnemyPlayer.hp },
       },
       null,
@@ -428,19 +419,14 @@ async function attackPlayerService(pPlayingPlayerId, pCard) {
   }
 }
 
-async function endTurnService(pPlayingPlayerId) {
+async function endTurnService(pPlayer, pMatchDocument) {
   try {
-    const lMatchDocument = await getCurrentMatch(pPlayingPlayerId);
-    if (!lMatchDocument) {
-      return [null, new StatusCodeError('There is no match associated', 404)];
-    }
-    const lPlayer = getConnectedPlayer(pPlayingPlayerId, lMatchDocument);
-    const lEnemy = WHO[lPlayer].enemy;
-    const lMatchPlayer = { ...lMatchDocument[lPlayer] };
-    const lEnemyPlayer = { ...lMatchDocument[lEnemy] };
+    const lEnemy = WHO[pPlayer].enemy;
+    const lMatchPlayer = { ...pMatchDocument[pPlayer] };
+    const lEnemyPlayer = { ...pMatchDocument[lEnemy] };
 
-    if (!lMatchPlayer.turn) {
-      throw 'Not your turn'
+    for( let cardIndex in lMatchPlayer.board){
+      lMatchPlayer.board[cardIndex].attack = false
     }
     lMatchPlayer.cardPicked = false;
     lMatchPlayer.turn = false;
@@ -449,11 +435,11 @@ async function endTurnService(pPlayingPlayerId) {
 
     const lCurrentMatch = {
       status,
-      [lPlayer]: lMatchPlayer,
+      [pPlayer]: lMatchPlayer,
       [lEnemy]: lEnemyPlayer,
     };
-    const res= await updateMatch(lMatchDocument._id, lCurrentMatch);
-    return [`End of turn ${lPlayer}`, null];
+    const res= await updateMatch(pMatchDocument._id, lCurrentMatch);
+    return [`End of turn ${pPlayer}`, null];
   } catch (error) {
     return [null, new StatusCodeError(error, 400)];
   }

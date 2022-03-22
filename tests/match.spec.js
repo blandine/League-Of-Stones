@@ -316,41 +316,71 @@ describe('match', () => {
   
   
   
-        // describe('after 1 turn ...', () => {
-        //   beforeEach(async (done) => {
-        //     //j1 plays 1 card
-        //     let cardKey;
-        //     matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
-        //     expect(matchInfo1.body.status).toEqual('Turn : player 1');
-        //     cardKey = matchInfo1.body.player1.hand[0].key;
-        //     await requestPlayCard(cardKey, lUserInfo.token);
+        describe('after 1 turn ...', () => {
+          beforeEach(async (done) => {
+            //j1 plays 1 card
+            let cardKey;
+            matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
+            expect(matchInfo1.body.status).toEqual('Turn : player 1');
+            cardKey = matchInfo1.body.player1.hand[0].key;
+            await requestPlayCard(cardKey, lUserInfo.token);
+            const res= await requestEndTurn(lUserInfo.token)
+            //j2 plays
+            matchInfo2 = await requestGetMatchInfo(lUserInfo2.token);
+              
+            expect(matchInfo2.body.status).toEqual('Turn : player 2');
+            cardKey = matchInfo2.body.player2.hand[0].key;
+            await requestPlayCard(cardKey, lUserInfo2.token);
+            await requestEndTurn(lUserInfo2.token)
+            matchInfo2 = await requestGetMatchInfo(lUserInfo2.token);
+            
+            expect(matchInfo2.body.status).toEqual('Turn : player 1');
+            done();
+          });
   
-        //     //j2 plays
-        //     matchInfo2 = await requestGetMatchInfo(lUserInfo2.token);
-        //     expect(matchInfo2.body.status).toEqual('Turn : player 2');
-        //     cardKey = matchInfo2.body.player2.hand[0].key;
-        //     await requestPlayCard(cardKey, lUserInfo2.token);
-        //     done();
-        //   });
+          test('bad value for enemycard', async (done) => {
+            matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
+            expect(matchInfo1.body.status).toEqual('Turn : player 1');
+            const cardKey = matchInfo1.body.player1.board[0].key;
+            const { statusCode, body } = await requestAttackCard(
+              cardKey,
+              'test',
+              lUserInfo.token
+            );
+            expect(statusCode).toBe(400);
+            expect(body.message).toBe("Ennemy's card is not on the board");
+            done();
+          });
+          test('Player card is not on the board', async (done) => {
+            matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
+            expect(matchInfo1.body.status).toEqual('Turn : player 1');
+            const cardKey = matchInfo1.body.player1.hand[0].key;
+            const ennemyCardKey = matchInfo1.body.player2.board[0].key;
+            const { statusCode, body } = await requestAttackCard(
+              cardKey,
+              ennemyCardKey,
+              lUserInfo.token
+            );
+            expect(statusCode).toBe(400);
+            expect(body.message).toBe("Player's card is not on the board");
+            done();
+          });
+
+          test('Player card on the board attack ennemy card on the board', async (done) => {
+            matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
+            expect(matchInfo1.body.status).toEqual('Turn : player 1');
+            const cardKey = matchInfo1.body.player1.board[0].key;
+            const ennemyCardKey = matchInfo1.body.player2.board[0].key;
+            const { statusCode } = await requestAttackCard(
+              cardKey,
+              ennemyCardKey,
+              lUserInfo.token
+            );
+            expect(statusCode).toBe(200);
+            done();
+          });
+        });
   
-        //   test('bad value for enemycard', async (done) => {
-        //     matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
-        //     expect(matchInfo1.body.status).toEqual('Turn : player 1');
-        //     const cardKey = matchInfo1.body.player1.hand[0].key;
-        //     const { statusCode, body } = await requestAttackCard(
-        //       cardKey,
-        //       'test',
-        //       lUserInfo.token
-        //     );
-        //     expect(statusCode).toBe(400);
-        //     expect(body.message).toBe("Ennemy's card is not on the board");
-        //     done();
-        //   });
-        // });
-  
-        // matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
-        // expect(matchInfo1.body.status).toEqual('Turn : player 1');
-        // const cardKey = matchInfo1.body.player1.hand[0].key;
       });
     })
     

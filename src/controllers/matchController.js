@@ -75,7 +75,10 @@ async function attackCard(req, res) {
 async function attackPlayer(req, res) {
   try {
     const pCard = req.query.card;
-    const response = await attackPlayerService(req.playerId, pCard);
+    const pMatchDocument = req.matchDocument;
+    const pPlayer = req.player;
+
+    const response = await attackPlayerService(pPlayer, pCard, pMatchDocument);
     sendResponse(response, res, req);
   } catch (e) {
     sendError(new StatusCodeError(e, 400), res);
@@ -83,7 +86,9 @@ async function attackPlayer(req, res) {
 }
 
 async function endTurn(req, res) {
-  const response = await endTurnService(req.playerId);
+  const pMatchDocument = req.matchDocument;
+  const pPlayer = req.player;
+  const response = await endTurnService(pPlayer,pMatchDocument);
   sendResponse(response, res, req);
 }
 
