@@ -3,7 +3,9 @@ const { MongoDBConnection } = require('./utils/database.js');
 const { PLAYER1, PLAYER2 } = require('./utils/misc.js');
 
 function requiresAuth(req, res, next) {
-  if (req.session && req.session.connectedUser) {
+  const lPlayerId = req?.session?.connectedUser?.id;
+  if (lPlayerId) {
+    req.playerId = lPlayerId
     next();
   } else {
     next(createError(401, 'User not connected.'));
