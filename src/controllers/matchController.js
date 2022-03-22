@@ -13,7 +13,7 @@ const {
 } = require('../services/matchService');
 
 async function getMatchData(req, res) {
-  const response = await getMatchDataService(req.playerId,req.matchDocument);
+  const response = await getMatchDataService(req.playerId, req.matchDocument);
   sendResponse(response, res, req);
 }
 
@@ -40,16 +40,17 @@ async function initDeck(req, res) {
     sendError(error, res);
     return;
   }
-  const response = await initDeckService(req.playerId, lDeck);
+  const pPlayer = req.player;
+  const pMatchDocument = req.matchDocument;
+  const response = await initDeckService( pMatchDocument,pPlayer, lDeck);
   sendResponse(response, res, req);
 
 }
 
 async function pickCard(req, res) {
-  const lPlayer = req.player;
-  const lMatchDocument = req.matchDocument;
-
-  const response = await pickCardService(lPlayer,lMatchDocument);
+  const pPlayer = req.player;
+  const pMatchDocument = req.matchDocument;
+  const response = await pickCardService(pMatchDocument, pPlayer);
   sendResponse(response, res, req);
 }
 
@@ -65,7 +66,9 @@ async function attackCard(req, res) {
   try {
     const pCard = req.query.card;
     const pEnemyCard = req.query.ennemyCard;
-    const response = await attackCardService(req.playerId, pCard, pEnemyCard);
+    const pMatchDocument = req.matchDocument;
+    const pPlayer = req.player;
+    const response = await attackCardService(pMatchDocument, pPlayer, pCard, pEnemyCard);
     sendResponse(response, res, req);
   } catch (e) {
     sendError(new StatusCodeError(e, 400), res);
@@ -88,12 +91,14 @@ async function attackPlayer(req, res) {
 async function endTurn(req, res) {
   const pMatchDocument = req.matchDocument;
   const pPlayer = req.player;
-  const response = await endTurnService(pPlayer,pMatchDocument);
+  const response = await endTurnService(pPlayer, pMatchDocument);
   sendResponse(response, res, req);
 }
 
 async function finishMatch(req, res) {
-  const response = await finishMatchService(req.playerId);
+  const pMatchDocument = req.matchDocument;
+  const pPlayer = req.player;
+  const response = await finishMatchService(pPlayer, pMatchDocument);
   sendResponse(response, res, req);
 }
 module.exports = {

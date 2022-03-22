@@ -50,6 +50,7 @@ async function hasMatchAssociated(req, res, next) {
   const lMatchDocument = await getCurrentMatch(req.playerId);
   if (lMatchDocument) {
     req.matchDocument = lMatchDocument
+    req.player = req.playerId == lMatchDocument[PLAYER1].id ? PLAYER1 : PLAYER2;
     next()
   } else {
     next(createError(404, 'There is no match associated'));

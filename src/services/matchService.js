@@ -190,7 +190,7 @@ async function all_defined(deck) {
   return null;
 }
 
-async function initDeckService(pPlayingPlayerId, pDeck) {
+async function initDeckService(pMatchDocument, pPlayer, pDeck) {
   if (!pDeck || !pDeck.length || pDeck.length !== 20) {
     return [null, `Deck initialisation requires 20 cards`];
   }
@@ -202,37 +202,25 @@ async function initDeckService(pPlayingPlayerId, pDeck) {
     return [null, `Unknown card definitions found in deck.`];
   }
   try {
-    const lMatchDocument = await getCurrentMatch(pPlayingPlayerId);
-    if (!lMatchDocument) {
-      return [null, new StatusCodeError('There is no match associated', 404)];
-    }
-    if (lMatchDocument.status !== MATCH_STATUS.DeckIsPending) {
+    if (pMatchDocument.status !== MATCH_STATUS.DeckIsPending) {
       return [null, `The match status is not pending a deck`];
     }
-    const lPlayer = getConnectedPlayer(pPlayingPlayerId, lMatchDocument);
-    const lMatchPlayer = lMatchDocument[lPlayer];
+    const lMatchPlayer = pMatchDocument[pPlayer];
     if (getDeckLength(lMatchPlayer)) {
       return [null, `A deck is already defined`];
     }
 
-    await updatePlayerDeck(lMatchDocument._id, lPlayer, lCards);
-    return [{ player: lPlayer, deck: 'initialized' }, null];
+    await updatePlayerDeck(pMatchDocument._id, pPlayer, lCards);
+    return [{ player: pPlayer, deck: 'initialized' }, null];
   } catch (e) {
     return [null, `Get all matches error : ${e}`];
   }
 }
 
-function whoseTurn(pPlayingPslayerId, pMatchDocument){
-  const lPlayer = getConnectedPlayer(pPlayingPlayerId, pMatchDocument);
-  if(!pMatchDocument[lPlayer].turn){
-    throw new StatusCodeError('Not your turn', 400)
-  }
-  return lPlayer
-}
 
-async function pickCardService(lPlayer, lMatchDocument) {
+async function pickCardService(pMatchDocument, pPlayer ) {
   try {
-    const lMatchPlayer = lMatchDocument[lPlayer]
+    const lMatchPlayer = pMatchDocument[pPlayer]
     if (lMatchPlayer.cardPicked == true) {
       throw 'Card already picked'
     }
@@ -244,15 +232,15 @@ async function pickCardService(lPlayer, lMatchDocument) {
 
     const lNewHand = [...lMatchPlayer.hand, lPickedCard];
     const lCurrentMatch = {
-      ...lMatchDocument,
-      [lPlayer]: {
+      ...pMatchDocument,
+      [pPlayer]: {
         ...lMatchPlayer,
         deck: lNewDeck,
         hand: lNewHand,
         cardPicked: true,
       },
     };
-    await updateMatch(lMatchDocument._id, lCurrentMatch);
+    await updateMatch(pMatchDocument._id, lCurrentMatch);
     return [lPickedCard, null];
   } catch (error) {
     return [null, new StatusCodeError(error, 400)];
@@ -263,9 +251,9 @@ function getCardIndexFromKey(pCards, pCardKey) {
   return pCards.findIndex((elem) => elem.key === pCardKey);
 }
 
-async function playCardService(pMatchDocument, lPlayer, pCardKey) {
+async function playCardService(pMatchDocument, pPlayer, pCardKey) {
   try {
-    return await playCardService_impl(pMatchDocument,lPlayer,pCardKey)
+    return await playCardService_impl(pMatchDocument, pPlayer, pCardKey)
   } catch (error) {
     return [null, new StatusCodeError(error, 400)];
   }
@@ -301,11 +289,8 @@ async function playCardService_impl(pMatchDocument, pPlayer, pCardKey) {
 }
 
 
-async function attackCardService(pPlayingPlayerId, pCard, pEnemyCard) {
+async function attackCardService(lMatchDocument, lPlayer,  pCard, pEnemyCard) {
   try {
-    const lMatchDocument = await getCurrentMatch(pPlayingPlayerId);
-    const lPlayer = getConnectedPlayer(pPlayingPlayerId, lMatchDocument);
-
     const lEnemy = WHO[lPlayer].enemy;
     const lMatchPlayer = { ...lMatchDocument[lPlayer] };
     const lEnemyPlayer = { ...lMatchDocument[lEnemy] };
@@ -445,25 +430,20 @@ async function endTurnService(pPlayer, pMatchDocument) {
   }
 }
 
-async function finishMatchService(pPlayingPlayerId) {
+async function finishMatchService(pPlayer, pMatchDocument) {
   try {
-    const lMatchDocument = await getCurrentMatch(pPlayingPlayerId);
-    if (!lMatchDocument) {
-      return [null, new StatusCodeError('There is no match associated', 404)];
-    }
-    const lPlayer = getConnectedPlayer(pPlayingPlayerId, lMatchDocument);
-    const lEnemy = WHO[lPlayer].enemy;
+    const lEnemy = WHO[pPlayer].enemy;
 
     if (
-      lMatchDocument[lPlayer].turn == true ||
-      lMatchDocument[lEnemy].turn == true
+      pMatchDocument[pPlayer].turn == true ||
+      pMatchDocument[lEnemy].turn == true
     ) {
       throw 'Match is not finished'
     }
-    const lMatchId = lMatchDocument._id;
+    const lMatchId = pMatchDocument._id;
     await removeMatch(lMatchId);
     await removeMatchmaking(lMatchId);
-    return [lMatchDocument.status, null];
+    return [pMatchDocument.status, null];
   } catch (error) {
     return [null, new StatusCodeError(error, 400)];
   }

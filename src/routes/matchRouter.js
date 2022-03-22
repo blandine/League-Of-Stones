@@ -8,13 +8,13 @@ var router = express.Router();
 
 router.get('/getMatch', hasMatchAssociated, getMatchData);
 router.get('/getAllMatch', getAllMatches);
-router.get('/initDeck', initDeck);
+router.get('/initDeck', hasMatchAssociated, initDeck);
 
 router.get('/pickCard', canPlay, pickCard);
 router.get('/playCard', hasCardQueryParam, canPlay, playCard);
 router.get('/attack', hasCardQueryParam, hasEnemyCardQueryParam, canPlay, attackCard);
 router.get('/attackPlayer', hasCardQueryParam, canPlay, attackPlayer);
 router.get('/endTurn', canPlay, endTurn);
-router.get('/finishMatch', finishMatch);
+router.get('/finishMatch', hasMatchAssociated, finishMatch);
 
 module.exports = router;
