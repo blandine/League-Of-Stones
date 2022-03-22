@@ -107,17 +107,13 @@ async function updateMatchStatus(pMatchId, status) {
   );
 }
 
-async function getMatchDataService(pPlayingPlayerId) {
+async function getMatchDataService(pPlayingPlayerId, pMatchDocument) {
   try {
-    const lMatchDocument = await getCurrentMatch(pPlayingPlayerId);
-    if (!lMatchDocument) {
-      return [null, new StatusCodeError('There is no match associated', 404)];
-    }
 
-    if (!lMatchDocument.status) {
+    if (!pMatchDocument.status) {
       const lStatus = MATCH_STATUS.DeckIsPending;
       try {
-        await updateMatchStatus(lMatchDocument._id, lStatus);
+        await updateMatchStatus(pMatchDocument._id, lStatus);
         return [lStatus, null];
       } catch (error) {
         return [
@@ -126,10 +122,10 @@ async function getMatchDataService(pPlayingPlayerId) {
         ];
       }
     }
-    let lMatchInit = lMatchDocument;
-    if (matchNeedsInit(lMatchDocument)) {
-      lMatchInit = getMatchInit(lMatchDocument);
-      await updateMatch(lMatchDocument._id, lMatchInit);
+    let lMatchInit = pMatchDocument;
+    if (matchNeedsInit(pMatchDocument)) {
+      lMatchInit = getMatchInit(pMatchDocument);
+      await updateMatch(pMatchDocument._id, lMatchInit);
     }
 
     const lResponse = getMatchResponse(pPlayingPlayerId, lMatchInit);

@@ -12,22 +12,13 @@ const {
   playCardService
 } = require('../services/matchService');
 
-function getSessionId(req){
-  return req.session.connectedUser.id
-}
-
 async function getMatchData(req, res) {
-  if (!req.session.connectedUser || !getSessionId(req)) {
-    sendError(new StatusCodeError("Session is invalid", 400), res);
-    return;
-  }
-  const lPlayingPlayerId = getSessionId(req);
-  const response = await getMatchDataService(lPlayingPlayerId);
+  const response = await getMatchDataService(req.playerId,req.matchDocument);
   sendResponse(response, res, req);
 }
 
 async function getAllMatches(req, res) {
-  const response = await getAllMatchesService(lPlayingPlayerId);
+  const response = await getAllMatchesService(req.playerId);
   sendResponse(response, res, req);
 }
 
@@ -49,14 +40,12 @@ async function initDeck(req, res) {
     sendError(error, res);
     return;
   }
-  const lPlayingPlayerId = getSessionId(req);
-  const response = await initDeckService(lPlayingPlayerId, lDeck);
+  const response = await initDeckService(req.playerId, lDeck);
   sendResponse(response, res, req);
 
 }
 
 async function pickCard(req, res) {
-  const lPlayingPlayerId = getSessionId(req);
   const lPlayer = req.player;
   const lMatchDocument = req.matchDocument;
 
@@ -74,12 +63,9 @@ async function playCard(req, res) {
 
 async function attackCard(req, res) {
   try {
-    const lPlayingPlayerId = getSessionId(req);
     const pCard = req.query.card;
     const pEnemyCard = req.query.ennemyCard;
-    const lMatchDocument = req.matchDocument;
-    const lPlayer = req.player;
-    const response = await attackCardService(lPlayingPlayerId, pCard, pEnemyCard);
+    const response = await attackCardService(req.playerId, pCard, pEnemyCard);
     sendResponse(response, res, req);
   } catch (e) {
     sendError(new StatusCodeError(e, 400), res);
@@ -88,9 +74,8 @@ async function attackCard(req, res) {
 
 async function attackPlayer(req, res) {
   try {
-    const lPlayingPlayerId = getSessionId(req);
     const pCard = req.query.card;
-    const response = await attackPlayerService(lPlayingPlayerId, pCard);
+    const response = await attackPlayerService(req.playerId, pCard);
     sendResponse(response, res, req);
   } catch (e) {
     sendError(new StatusCodeError(e, 400), res);
@@ -98,14 +83,12 @@ async function attackPlayer(req, res) {
 }
 
 async function endTurn(req, res) {
-  const lPlayingPlayerId = getSessionId(req);
-  const response = await endTurnService(lPlayingPlayerId);
+  const response = await endTurnService(req.playerId);
   sendResponse(response, res, req);
 }
 
 async function finishMatch(req, res) {
-  const lPlayingPlayerId = getSessionId(req);
-  const response = await finishMatchService(lPlayingPlayerId);
+  const response = await finishMatchService(req.playerId);
   sendResponse(response, res, req);
 }
 module.exports = {

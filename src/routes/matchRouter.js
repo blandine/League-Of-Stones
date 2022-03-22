@@ -2,11 +2,11 @@ var express = require('express');
 const {
   getMatchData, getAllMatches, initDeck, pickCard, playCard, attackCard, endTurn, finishMatch, attackPlayer
 } = require('../controllers/matchController.js');
-const { hasEnemyCardQueryParam, hasCardQueryParam, canPlay } = require('../middlewares.js');
+const { hasEnemyCardQueryParam, hasCardQueryParam, hasMatchAssociated, canPlay } = require('../middlewares.js');
 var router = express.Router();
 
 
-router.get('/getMatch', getMatchData);
+router.get('/getMatch', hasMatchAssociated, getMatchData);
 router.get('/getAllMatch', getAllMatches);
 router.get('/initDeck', initDeck);
 
