@@ -2,18 +2,7 @@ const { StatusCodeError } = require('../routes/utils.js')
 const { MongoDBConnection } = require('../utils/database.js')
 
 const ObjectId = require('mongodb').ObjectID;
-const { all_different } = require('../utils/misc.js')
-const MATCH_STATUS = {
-  DeckIsPending: 'Deck is pending',
-  TurnPlayer1: 'Turn : player 1',
-  TurnPlayer2: 'Turn : player 2',
-};
-const PLAYER1 = 'player1';
-const PLAYER2 = 'player2';
-const WHO = {
-  [PLAYER1]: { me: PLAYER1, enemy: PLAYER2 },
-  [PLAYER2]: { me: PLAYER2, enemy: PLAYER1 },
-};
+const { all_different,WHO,PLAYER1,PLAYER2,MATCH_STATUS } = require('../utils/misc.js')
 
 async function getCurrentMatch(pPlayingPlayerId) {
   const lCollection = await MongoDBConnection.getMatchCollection();
@@ -54,13 +43,13 @@ function matchNeedsInit(pMatchDocument) {
 }
 
 function getMatchInit(pMatch) {
-  const deckPlayer1 = pMatch.player1.deck.splice(0, 4);
-  const deckPlayer2 = pMatch.player2.deck.splice(0, 4);
+  const deckPlayer1 = pMatch[PLAYER1].deck.splice(0, 4);
+  const deckPlayer2 = pMatch[PLAYER2].deck.splice(0, 4);
   return {
     ...pMatch,
-    status: MATCH_STATUS.TurnPlayer1,
+    status: MATCH_STATUS[PLAYER1],
     player1: {
-      ...pMatch.player1,
+      ...pMatch[PLAYER1],
       hp: 150,
       hand: deckPlayer1,
       board: [],
@@ -68,7 +57,7 @@ function getMatchInit(pMatch) {
       cardPicked: false,
     },
     player2: {
-      ...pMatch.player2,
+      ...pMatch[PLAYER2],
       hp: 150,
       hand: deckPlayer2,
       board: [],
@@ -237,18 +226,17 @@ async function initDeckService(pPlayingPlayerId, pDeck) {
   }
 }
 
-async function pickCardService(pPlayingPlayerId) {
-  try {
-    const lMatchDocument = await getCurrentMatch(pPlayingPlayerId);
-    if (!lMatchDocument) {
-      return [null, new StatusCodeError('There is no match associated', 404)];
-    }
-    const lPlayer = getConnectedPlayer(pPlayingPlayerId, lMatchDocument);
-    const lMatchPlayer = lMatchDocument[lPlayer];
+function whoseTurn(pPlayingPslayerId, pMatchDocument){
+  const lPlayer = getConnectedPlayer(pPlayingPlayerId, pMatchDocument);
+  if(!pMatchDocument[lPlayer].turn){
+    throw new StatusCodeError('Not your turn', 400)
+  }
+  return lPlayer
+}
 
-    if (!lMatchPlayer.turn) {
-      throw 'Not your turn'
-    }
+async function pickCardService(lPlayer, lMatchDocument) {
+  try {
+    const lMatchPlayer = lMatchDocument[lPlayer]
     if (lMatchPlayer.cardPicked == true) {
       throw 'Card already picked'
     }
@@ -276,17 +264,18 @@ async function pickCardService(pPlayingPlayerId) {
 }
 
 function getCardIndexFromKey(pCards, pCardKey) {
-  return pCards.findIndex((elem) => elem.key == pCardKey);
+  return pCards.findIndex((elem) => elem.key === pCardKey);
 }
 
-async function playCardService(pPlayingPlayerId, pCardKey) {
+async function playCardService(pMatchDocument, lPlayer, pCardKey) {
   try {
-    const lMatchDocument = await getCurrentMatch(pPlayingPlayerId);
-    if (!lMatchDocument) {
-      return [null, new StatusCodeError('There is no match associated', 404)];
-    }
-    const lPlayer = getConnectedPlayer(pPlayingPlayerId, lMatchDocument);
-    const lMatchPlayer = lMatchDocument[lPlayer];
+    return await playCardService_impl(pMatchDocument,lPlayer,pCardKey)
+  } catch (error) {
+    return [null, new StatusCodeError(error, 400)];
+  }
+}
+async function playCardService_impl(lMatchDocument, lPlayer, pCardKey) {
+  const lMatchPlayer = lMatchDocument[lPlayer];
 
     if (!lMatchPlayer.turn) {
       throw 'Not your turn';
@@ -313,18 +302,14 @@ async function playCardService(pPlayingPlayerId, pCardKey) {
     };
     await updateMatch(lMatchDocument._id, lCurrentMatch);
     return [{ player: { board: lNewBoard, hand: lNewHand } }, null];
-  } catch (error) {
-    return [null, new StatusCodeError(error, 400)];
-  }
 }
+
 
 async function attackCardService(pPlayingPlayerId, pCard, pEnemyCard) {
   try {
     const lMatchDocument = await getCurrentMatch(pPlayingPlayerId);
-    if (!lMatchDocument) {
-      return [null, new StatusCodeError('There is no match associated', 404)];
-    }
     const lPlayer = getConnectedPlayer(pPlayingPlayerId, lMatchDocument);
+
     const lEnemy = WHO[lPlayer].enemy;
     const lMatchPlayer = { ...lMatchDocument[lPlayer] };
     const lEnemyPlayer = { ...lMatchDocument[lEnemy] };
@@ -332,9 +317,6 @@ async function attackCardService(pPlayingPlayerId, pCard, pEnemyCard) {
     const lEnemyBoard = lEnemyPlayer.board;
     let lStatus = lMatchDocument.status;
 
-    if (!lMatchPlayer.turn) {
-      throw 'Not your turn'
-    }
 
     let lCardIndex = getCardIndexFromKey(lPlayerBoard, pCard); 
     if (lCardIndex === -1) {
@@ -467,13 +449,14 @@ async function endTurnService(pPlayingPlayerId) {
     lMatchPlayer.cardPicked = false;
     lMatchPlayer.turn = false;
     lEnemyPlayer.turn = true;
+    const status = MATCH_STATUS[lEnemy]
 
     const lCurrentMatch = {
-      status: lMatchDocument.status,
+      status,
       [lPlayer]: lMatchPlayer,
       [lEnemy]: lEnemyPlayer,
     };
-    await updateMatch(lMatchDocument._id, lCurrentMatch);
+    const res= await updateMatch(lMatchDocument._id, lCurrentMatch);
     return [`End of turn ${lPlayer}`, null];
   } catch (error) {
     return [null, new StatusCodeError(error, 400)];
@@ -509,9 +492,9 @@ module.exports = {
   getAllMatchesService,
   initDeckService,
   pickCardService,
-  playCardService,
   attackCardService,
   attackPlayerService,
   endTurnService,
   finishMatchService,
+  playCardService
 };

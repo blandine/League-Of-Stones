@@ -5,11 +5,11 @@ const {
   getAllMatchesService,
   initDeckService,
   pickCardService,
-  playCardService,
   attackCardService,
   attackPlayerService,
   endTurnService,
-  finishMatchService
+  finishMatchService,
+  playCardService
 } = require('../services/matchService');
 
 function getSessionId(req){
@@ -57,18 +57,18 @@ async function initDeck(req, res) {
 
 async function pickCard(req, res) {
   const lPlayingPlayerId = getSessionId(req);
-  const response = await pickCardService(lPlayingPlayerId);
+  const lPlayer = req.player;
+  const lMatchDocument = req.matchDocument;
+
+  const response = await pickCardService(lPlayer,lMatchDocument);
   sendResponse(response, res, req);
 }
 
 async function playCard(req, res) {
-  const lPlayingPlayerId = getSessionId(req);
   const pCardKey = req.query.card;
-  if (!pCardKey) {
-    sendError(new StatusCodeError('Card query parameter is missing', 400), res);
-    return;
-  }
-  const response = await playCardService(lPlayingPlayerId, pCardKey);
+  const pMatchDocument = req.matchDocument;
+  const pPlayer = req.player;
+  const response = await playCardService(pMatchDocument, pPlayer, pCardKey);
   sendResponse(response, res, req);
 }
 
@@ -76,14 +76,9 @@ async function attackCard(req, res) {
   try {
     const lPlayingPlayerId = getSessionId(req);
     const pCard = req.query.card;
-    if (!pCard) {
-      throw 'card query parameter is missing'
-    }
     const pEnemyCard = req.query.ennemyCard;
-    if (!pEnemyCard) {
-      throw 'ennemyCard query parameter is missing'
-    }
-
+    const lMatchDocument = req.matchDocument;
+    const lPlayer = req.player;
     const response = await attackCardService(lPlayingPlayerId, pCard, pEnemyCard);
     sendResponse(response, res, req);
   } catch (e) {
@@ -95,9 +90,6 @@ async function attackPlayer(req, res) {
   try {
     const lPlayingPlayerId = getSessionId(req);
     const pCard = req.query.card;
-    if (!pCard) {
-      throw 'card query parameter is missing'
-    }
     const response = await attackPlayerService(lPlayingPlayerId, pCard);
     sendResponse(response, res, req);
   } catch (e) {
@@ -107,7 +99,7 @@ async function attackPlayer(req, res) {
 
 async function endTurn(req, res) {
   const lPlayingPlayerId = getSessionId(req);
-  const response = await endTurnService(lPlayingPlayerId, pCard);
+  const response = await endTurnService(lPlayingPlayerId);
   sendResponse(response, res, req);
 }
 
