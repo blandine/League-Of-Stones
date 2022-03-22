@@ -1,11 +1,8 @@
 const { createAccount, logout } = require('../src/services/usersService');
 const { mocks, setupDb } = require('./common');
 const {
-  requestGetAll,
   requestLogin,
-  requestLogout,
   requestParticipate,
-  requestUnparticipate,
   requestSendRequest,
   requestAcceptRequest,
   requestCards,
@@ -13,10 +10,13 @@ const {
   requestGetMatchInfo,
   requestPlayCard,
   requestPickCard,
+  requestAttackPlayer,
+  requestAttackCard,
+  requestEndTurn,
 } = require('./requests');
 setupDb();
 
-const initGame = async (user1,user2)=>{
+const initGame = async (user1, user2) => {
   let responseLoginUser1 = await requestLogin(user1);
   const lUserInfo = responseLoginUser1.body;
   let responseLoginUser2 = await requestLogin(user2);
@@ -36,39 +36,48 @@ const initGame = async (user1,user2)=>{
 
   let matchInfo = await requestGetMatchInfo(lUserInfo2.token);
 
-  return {userInfo1:lUserInfo,userInfo2:lUserInfo2,matchInfo}
-}
+  return { userInfo1: lUserInfo, userInfo2: lUserInfo2, matchInfo };
+};
 describe('match', () => {
   let lUserInfo;
   let lUserInfo2;
   beforeAll(async (done) => {
     // Connect to a Mongo DB
-    await createAccount(mocks.user1.email, mocks.user1.password, mocks.user1.name);
-    await createAccount(mocks.user2.email, mocks.user2.password, mocks.user2.name);
+    await createAccount(
+      mocks.user1.email,
+      mocks.user1.password,
+      mocks.user1.name
+    );
+    await createAccount(
+      mocks.user2.email,
+      mocks.user2.password,
+      mocks.user2.name
+    );
     done();
   });
 
   beforeEach(async (done) => {
-    const {userInfo1,userInfo2, matchInfo } = await initGame(mocks.user1,mocks.user2)
-    lUserInfo = userInfo1
-    lUserInfo2 = userInfo2
+    const { userInfo1, userInfo2, matchInfo } = await initGame(
+      mocks.user1,
+      mocks.user2
+    );
+    lUserInfo = userInfo1;
+    lUserInfo2 = userInfo2;
     expect(matchInfo.statusCode).toBe(200);
     done();
   });
 
   afterEach(async (done) => {
-    if(lUserInfo?.id){
+    if (lUserInfo?.id) {
       await logout(lUserInfo.id);
     }
-    if(lUserInfo2?.id){
-        await logout(lUserInfo2.id);
+    if (lUserInfo2?.id) {
+      await logout(lUserInfo2.id);
     }
     done();
   });
 
-  
-  describe('init deck',()=>{
-
+  describe('init deck', () => {
     test('init deck player 1 without 20 cards', async (done) => {
       const lResCards = await requestCards();
 
@@ -131,81 +140,296 @@ describe('match', () => {
     test('two decks are ok', async (done) => {
       const lResCards = await requestCards();
       const cards = [...lResCards.body.slice(0, 20)];
-      
+
       await requestInitDeck(cards, lUserInfo.token);
 
       let matchInfo2 = await requestGetMatchInfo(lUserInfo2.token);
       expect(matchInfo2.statusCode).toBe(200);
 
       await requestInitDeck(cards, lUserInfo2.token);
-      
+
       matchInfo2 = await requestGetMatchInfo(lUserInfo2.token);
       expect(matchInfo2.statusCode).toBe(200);
       expect(matchInfo2.body.status).toEqual('Turn : player 1');
       done();
     });
-  })
-  
+  });
 
-  describe('start playing',()=>{
-    beforeEach(async (done)=>{
-      
-    const lResCards = await requestCards();
-    const cards = [...lResCards.body.slice(0, 20)];
+  describe('start playing', () => {
+    let lResCards;
+
+    beforeAll(async (done) => {
+      lResCards = await requestCards();
+      done();
+    });
+
+    beforeEach(async (done) => {
+      const cards = [...lResCards.body.slice(0, 20)];
       await requestInitDeck(cards, lUserInfo.token);
       await requestInitDeck(cards, lUserInfo2.token);
       done();
-   })
-
-   test('player 2 try to play before her turn',async(done)=>{
-    matchInfo2 = await requestGetMatchInfo(lUserInfo2.token);
-    expect(matchInfo2.body.status).toEqual('Turn : player 1');
-    const card = matchInfo2.body.player2.hand[0]
-    const response = await requestPlayCard(card.key,lUserInfo2.token)
-    expect(response.statusCode).toBe(400) 
-    expect(response.body.message).toEqual('Not your turn');
-    done()
-   })
-   test('player 1 try to play an unknown card',async(done)=>{
-    matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
-    expect(matchInfo1.body.status).toEqual('Turn : player 1');
-    const cardKey = 'TEST'
-    const response = await requestPlayCard(cardKey,lUserInfo.token)
-    expect(response.statusCode).toBe(400) 
-    expect(response.body.message).toEqual('Card is not in the hand');
-    done()
-   })
-
+    });
    
-   test('player 1 plays her first valid card',async(done)=>{
-    matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
-    expect(matchInfo1.body.status).toEqual('Turn : player 1');
-    const cardKey = matchInfo1.body.player1.hand[0].key
-    const response = await requestPlayCard(cardKey,lUserInfo.token)
-    expect(response.statusCode).toBe(200) 
-    matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
-    expect(matchInfo1.body.status).toEqual('Turn : player 1');
-    done()
-   })
+    describe('Match needs to be initialized',()=>{
+      test('Attack Card', async (done) => {
+        const { statusCode, body } = await requestAttackCard(
+          'test',
+          'test',
+          lUserInfo.token
+        );
+        expect(statusCode).toBe(400);
+        expect(body.message).toBe('Match needs to be initialized first');
+        done();
+      });
 
-  test('player 1 can pick only one card',async(done)=>{
-    matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
-    expect(matchInfo1.body.status).toEqual('Turn : player 1');
-    expect(matchInfo1.body.player1.hand.length).toBe(4)
+      test('end turn', async (done) => {
+        const response = await requestEndTurn(lUserInfo.token);
+        expect(response.statusCode).toBe(400);
+        expect(response.body.message).toBe('Match needs to be initialized first');
+        done();
+      });
 
+      test('Play Card', async (done) => {
+        const {statusCode,body} = await requestPlayCard('test', lUserInfo2.token);
+        expect(statusCode).toBe(400);
+        expect(body.message).toBe('Match needs to be initialized first');
+        done();
+      });
+
+      test('pick card', async (done) => {
+        const {statusCode,body} = await requestPickCard(lUserInfo.token);
+        expect(statusCode).toBe(400);
+        expect(body.message).toBe('Match needs to be initialized first');
+        done();
+      });
+    })
+
+    describe('match is initialized',()=>{
+      describe('playing a card', () => {
+        test('missing card param', async (done) => {
+          const {statusCode,body} = await requestPlayCard(undefined, lUserInfo2.token);
+          expect(statusCode).toBe(400);
+          expect(body.message).toBe('card query parameter is missing');
+          done();
+        });
+  
+         
+        test('player 2 try to play before her turn', async (done) => {
+          matchInfo2 = await requestGetMatchInfo(lUserInfo2.token);
+          expect(matchInfo2.body.status).toEqual('Turn : player 1');
+          const card = matchInfo2.body.player2.hand[0];
+          const response = await requestPlayCard(card.key, lUserInfo2.token);
+          expect(response.statusCode).toBe(400);
+          expect(response.body.message).toEqual('Not your turn');
+          done();
+        });
+        test('player 1 try to play an unknown card', async (done) => {
+          matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
+          expect(matchInfo1.body.status).toEqual('Turn : player 1');
+          const cardKey = 'TEST';
+          const response = await requestPlayCard(cardKey, lUserInfo.token);
+          expect(response.statusCode).toBe(400);
+          expect(response.body.message).toEqual('Card is not in the hand');
+          done();
+        });
+  
+        test('player 1 plays her first valid card', async (done) => {
+          matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
+          expect(matchInfo1.body.status).toEqual('Turn : player 1');
+          const cardKey = matchInfo1.body.player1.hand[0].key;
+          const response = await requestPlayCard(cardKey, lUserInfo.token);
+          expect(response.statusCode).toBe(200);
+          matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
+          expect(matchInfo1.body.status).toEqual('Turn : player 1');
+          done();
+        });
+      });
+      describe('picking a card', () => {
+        test('player 1 can pick only one card', async (done) => {
+          matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
+          expect(matchInfo1.body.status).toEqual('Turn : player 1');
+          expect(matchInfo1.body.player1.hand.length).toBe(4);
+  
+          const response = await requestPickCard(lUserInfo.token);
+          expect(response.statusCode).toBe(200);
+          matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
+          expect(matchInfo1.body.player1.hand.length).toBe(5);
+  
+          const response2 = await requestPickCard(lUserInfo.token);
+          expect(response2.statusCode).toBe(400);
+  
+          matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
+          expect(matchInfo1.body.player1.hand.length).toBe(5);
+          done();
+        });
+      });
+
+      describe('Attack player', () => {
+        test("Needs card params", async (done) => {
+          matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
+          expect(matchInfo1.body.status).toEqual('Turn : player 1');
+          const { statusCode, body } = await requestAttackPlayer(
+            null,
+            lUserInfo.token
+          );
+          expect(statusCode).toBe(400);
+          expect(body.message).toBe("card query parameter is missing");
+          done();
+        });
+  
+        test("Player's card is not on the board", async (done) => {
+          matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
+          expect(matchInfo1.body.status).toEqual('Turn : player 1');
+          let cardKey = 'test';
+          const { statusCode, body } = await requestAttackPlayer(
+            cardKey,
+            lUserInfo.token
+          );
+          expect(statusCode).toBe(400);
+          expect(body.message).toBe("Player's card is not on the board");
+          done();
+        });
+      });
+
+      describe('attack card', () => {
+        test('missing card param', async (done) => {
+          matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
+          const { statusCode, body } = await requestAttackCard(
+            undefined,
+            'test',
+            lUserInfo.token
+          );
+          expect(statusCode).toBe(400);
+          expect(body.message).toBe('card query parameter is missing');
+          done();
+        });
+        test('missing enemyCard params', async (done) => {
+          const { statusCode, body } = await requestAttackCard(
+            'test',
+            undefined,
+            lUserInfo.token
+          );
+          expect(statusCode).toBe(400);
+          expect(body.message).toBe('ennemyCard query parameter is missing');
+          done();
+        });
+  
+  
+  
+        // describe('after 1 turn ...', () => {
+        //   beforeEach(async (done) => {
+        //     //j1 plays 1 card
+        //     let cardKey;
+        //     matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
+        //     expect(matchInfo1.body.status).toEqual('Turn : player 1');
+        //     cardKey = matchInfo1.body.player1.hand[0].key;
+        //     await requestPlayCard(cardKey, lUserInfo.token);
+  
+        //     //j2 plays
+        //     matchInfo2 = await requestGetMatchInfo(lUserInfo2.token);
+        //     expect(matchInfo2.body.status).toEqual('Turn : player 2');
+        //     cardKey = matchInfo2.body.player2.hand[0].key;
+        //     await requestPlayCard(cardKey, lUserInfo2.token);
+        //     done();
+        //   });
+  
+        //   test('bad value for enemycard', async (done) => {
+        //     matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
+        //     expect(matchInfo1.body.status).toEqual('Turn : player 1');
+        //     const cardKey = matchInfo1.body.player1.hand[0].key;
+        //     const { statusCode, body } = await requestAttackCard(
+        //       cardKey,
+        //       'test',
+        //       lUserInfo.token
+        //     );
+        //     expect(statusCode).toBe(400);
+        //     expect(body.message).toBe("Ennemy's card is not on the board");
+        //     done();
+        //   });
+        // });
+  
+        // matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
+        // expect(matchInfo1.body.status).toEqual('Turn : player 1');
+        // const cardKey = matchInfo1.body.player1.hand[0].key;
+      });
+    })
     
-    const response = await requestPickCard(lUserInfo.token)
-    expect(response.statusCode).toBe(200)
-    matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
-    expect(matchInfo1.body.player1.hand.length).toBe(5)
-
-    const response2 = await requestPickCard(lUserInfo.token)
-    expect(response2.statusCode).toBe(400)
-    
-    matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
-    expect(matchInfo1.body.player1.hand.length).toBe(5)
-    done()
-   })
-  })
+  });
 });
 
+describe('end turn', () => {
+  let lUserInfo;
+  let lUserInfo2;
+  beforeAll(async (done) => {
+    // Connect to a Mongo DB
+    await createAccount(
+      mocks.user1.email,
+      mocks.user1.password,
+      mocks.user1.name
+    );
+    await createAccount(
+      mocks.user2.email,
+      mocks.user2.password,
+      mocks.user2.name
+    );
+    done();
+  });
+
+  beforeEach(async (done) => {
+    const { userInfo1, userInfo2, matchInfo } = await initGame(
+      mocks.user1,
+      mocks.user2
+    );
+    lUserInfo = userInfo1;
+    lUserInfo2 = userInfo2;
+    expect(matchInfo.statusCode).toBe(200);
+    done();
+  });
+
+  afterEach(async (done) => {
+    if (lUserInfo?.id) {
+      await logout(lUserInfo.id);
+    }
+    if (lUserInfo2?.id) {
+      await logout(lUserInfo2.id);
+    }
+    done();
+  });
+
+  let lResCards;
+
+  beforeAll(async (done) => {
+    lResCards = await requestCards();
+    done();
+  });
+
+  beforeEach(async (done) => {
+    const cards = [...lResCards.body.slice(0, 20)];
+    await requestInitDeck(cards, lUserInfo.token);
+    await requestInitDeck(cards, lUserInfo2.token);
+    done();
+  });
+  test('player 1 ends turn', async (done) => {
+    matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
+    expect(matchInfo1.body.status).toEqual('Turn : player 1');
+
+    const response = await requestEndTurn(lUserInfo.token);
+    expect(response.statusCode).toBe(200);
+    expect(response.body.message).toBe('End of turn player1');
+    matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
+    expect(matchInfo1.body.status).toEqual('Turn : player 2');
+
+    matchInfo2 = await requestGetMatchInfo(lUserInfo2.token);
+    expect(matchInfo2.body.status).toEqual('Turn : player 2');
+
+    let response2 = await requestEndTurn(lUserInfo2.token);
+    expect(response2.statusCode).toBe(200);
+    expect(response2.body.message).toBe('End of turn player2');
+
+    matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
+    expect(matchInfo1.body.status).toEqual('Turn : player 1');
+    matchInfo2 = await requestGetMatchInfo(lUserInfo2.token);
+    expect(matchInfo2.body.status).toEqual('Turn : player 1');
+    done();
+  });
+});
