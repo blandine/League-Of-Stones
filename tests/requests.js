@@ -73,19 +73,25 @@ function requestPickCard(pToken) {
         .set('WWW-authenticate', pToken);
 }
 function requestPlayCard(pCardId,pToken) {
+    const cardParam= pCardId?`card=${pCardId}`:''
     return request(app)
-        .get(`/match/playCard?card=${pCardId}`)
+        .get(`/match/playCard?${cardParam}`)
         .set('WWW-authenticate', pToken);
 }
 function requestAttackPlayer(pCardId, pToken) {
+    const cardParam= pCardId?`card=${pCardId}`:''
+
     return request(app)
-        .get(`/match/attackPlayer?card=${pCardId}`)
+        .get(`/match/attackPlayer?${cardParam}`)
         .set('WWW-authenticate', pToken);
 }
 
-function requestAttackCard(pCardId, pToken) {
+function requestAttackCard(pCardId, pEnemyCardId, pToken) {
+    const cardParam= pCardId?`card=${pCardId}`:''
+    const enemyParam= pEnemyCardId?`ennemyCard=${pEnemyCardId}`:''
+    params=`${cardParam}&${enemyParam}`
     return request(app)
-        .get(`/match/attack?card=${pCardId}`)
+        .get(`/match/attack?${params}`)
         .set('WWW-authenticate', pToken);
 }
 function requestEndTurn(pToken) {
