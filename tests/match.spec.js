@@ -13,6 +13,7 @@ const {
   requestAttackPlayer,
   requestAttackCard,
   requestEndTurn,
+  requestFinishMatch,
 } = require('./requests');
 setupDb();
 
@@ -463,3 +464,106 @@ describe('end turn', () => {
     done();
   });
 });
+
+describe('finish match',()=>{
+  let lUserInfo;
+  let lUserInfo2;
+  beforeAll(async (done) => {
+    // Connect to a Mongo DB
+    await createAccount(
+      mocks.user1.email,
+      mocks.user1.password,
+      mocks.user1.name
+    );
+    await createAccount(
+      mocks.user2.email,
+      mocks.user2.password,
+      mocks.user2.name
+    );
+    done();
+  });
+
+  beforeEach(async (done) => {
+    const { userInfo1, userInfo2, matchInfo } = await initGame(
+      mocks.user1,
+      mocks.user2
+    );
+    lUserInfo = userInfo1;
+    lUserInfo2 = userInfo2;
+    expect(matchInfo.statusCode).toBe(200);
+    done();
+  });
+
+  afterEach(async (done) => {
+    if (lUserInfo?.id) {
+      await logout(lUserInfo.id);
+    }
+    if (lUserInfo2?.id) {
+      await logout(lUserInfo2.id);
+    }
+    done();
+  });
+
+  let lResCards;
+
+  beforeAll(async (done) => {
+    lResCards = await requestCards();
+    done();
+  });
+
+  beforeEach(async (done) => {
+    const cards = [...lResCards.body.slice(0, 20)];
+    await requestInitDeck(cards, lUserInfo.token);
+    await requestInitDeck(cards, lUserInfo2.token);
+    done();
+  });
+  test('finish match',async (done)=>{
+    let card;
+    matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
+    await requestPickCard(lUserInfo.token);
+    await requestEndTurn(lUserInfo.token)
+
+    matchInfo2 = await requestGetMatchInfo(lUserInfo2.token);
+    await requestEndTurn(lUserInfo2.token)
+    
+    matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
+    card = matchInfo1.body.player1.hand[0];
+    await requestPlayCard(card.key, lUserInfo.token);
+    await requestPickCard(lUserInfo.token);
+    await requestEndTurn(lUserInfo.token)
+
+    matchInfo2 = await requestGetMatchInfo(lUserInfo2.token);
+    await requestEndTurn(lUserInfo2.token)
+    
+    const {statusCode, body} = await requestFinishMatch(lUserInfo2.token)
+    expect(statusCode).toBe(400)
+    expect(body.message).toEqual('Match is not finished')
+    let matchInfo;
+    do{
+      matchInfo1 = await requestGetMatchInfo(lUserInfo.token);
+      if(matchInfo1.body.player1.hand.length){
+        card = matchInfo1.body.player1.hand[0].key;
+        await requestPlayCard(card, lUserInfo.token);
+      }
+      await requestPickCard(lUserInfo.token);
+      if(matchInfo1.body.player1.board.length){
+        cardA = matchInfo1.body.player1.board[0].key;
+        await requestAttackPlayer(cardA, lUserInfo.token);
+      }
+      await requestEndTurn(lUserInfo.token)
+        
+      matchInfo2 = await requestGetMatchInfo(lUserInfo2.token);
+      await requestEndTurn(lUserInfo2.token)
+
+      matchInfo = await requestGetMatchInfo(lUserInfo.token);
+      expect(matchInfo.body.player2.hp).toBeLessThanOrEqual(matchInfo1.body.player2.hp)
+    }while(matchInfo.body.player2.hp>0)
+   
+    await requestFinishMatch(lUserInfo2.token)
+    expect(matchInfo.body.status).toEqual('Player player1 won')
+    expect(matchInfo.body.player2.hp).toBeLessThanOrEqual(0)
+    
+   
+    done()
+  },100000)
+})
