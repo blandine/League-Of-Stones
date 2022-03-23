@@ -1,3 +1,4 @@
+const NB_POINTS = 80
 
 const PLAYER1 = 'player1';
 const PLAYER2 = 'player2';
@@ -29,6 +30,7 @@ function all_different(array) {
 
 
 module.exports = {
+  NB_POINTS,
   PLAYER1,
   PLAYER2,
   WHO,

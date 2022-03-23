@@ -2,7 +2,7 @@ const { StatusCodeError } = require('../routes/utils.js')
 const { MongoDBConnection } = require('../utils/database.js')
 
 const ObjectId = require('mongodb').ObjectID;
-const { all_different,WHO,PLAYER1,PLAYER2,MATCH_STATUS } = require('../utils/misc.js')
+const { all_different, WHO, PLAYER1, PLAYER2, MATCH_STATUS, NB_POINTS } = require('../utils/misc.js')
 
 async function getCurrentMatch(pPlayingPlayerId) {
   const lCollection = await MongoDBConnection.getMatchCollection();
@@ -50,7 +50,7 @@ function getMatchInit(pMatch) {
     status: MATCH_STATUS[PLAYER1],
     player1: {
       ...pMatch[PLAYER1],
-      hp: 150,
+      hp: NB_POINTS,
       hand: deckPlayer1,
       board: [],
       turn: true,
@@ -58,7 +58,7 @@ function getMatchInit(pMatch) {
     },
     player2: {
       ...pMatch[PLAYER2],
-      hp: 150,
+      hp: NB_POINTS,
       hand: deckPlayer2,
       board: [],
       turn: false,
